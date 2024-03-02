@@ -2,7 +2,7 @@ package internal
 
 import "errors"
 
-// Abstract definition of an iterator.
+// GeneralIterator is an abstract definition of an iterator.
 // Once created, an iterator is set before the first element, if any.
 // It means that value should not respond if called before the Next function.
 type GeneralIterator[T any] interface {
@@ -13,7 +13,7 @@ type GeneralIterator[T any] interface {
 	Value() (T, error)
 }
 
-// In memory implementation of local iterators.
+// LocalIterator is an in-memory implementation of iterators.
 type LocalIterator[T any] struct {
 	// values to return during iteration
 	Values []T
