@@ -6,10 +6,13 @@ import "errors"
 // Once created, an iterator is set before the first element, if any.
 // It means that value should not respond if called before the Next function.
 type GeneralIterator[T any] interface {
-	// Next returns true if there is a next element.
-	// It has to be called before value for the first element, if any
+	// Next moves to the next element if any, and returns true if there is a next element.
+	// It is initially set before first element, to deal with empty iterations.
+	// For distant data sources, it also includes the ability to return an error
+	// (for instance if said data source is not available)
 	Next() (bool, error)
-	// Value returns the current value if any, an error otherwise
+	// Value returns the current value if any, or an error.
+	// Implementations may return an error of any kind (data could not be loaded)
 	Value() (T, error)
 }
 
@@ -46,7 +49,7 @@ func (i *LocalIterator[T]) Next() (bool, error) {
 // Value returns the current value in the iterator, an error if there is no value
 func (i *LocalIterator[T]) Value() (T, error) {
 	var defaultValue T
-	if i.Index < 0 || i.Index >= len(i.Values) {
+	if i == nil || i.Index < 0 || i.Index >= len(i.Values) {
 		return defaultValue, errors.New("no value to return")
 	}
 
