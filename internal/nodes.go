@@ -25,6 +25,9 @@ type LabelPropertiesNode struct {
 	nodeProperties map[string]string
 }
 
+//  Neo4jNode is just an alias to ease use of Neo4j
+type Neo4jNode LabelPropertiesNode
+
 // Id returns the id of the node, default value for nil node
 func (lpn *LabelPropertiesNode) Id() string {
 	var result string
