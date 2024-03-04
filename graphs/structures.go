@@ -2,6 +2,7 @@ package graphs
 
 // ValueBasedGraph is the general definition of a graph that is sort of "ready for use":
 // definition does not provide nodes, links, neighborhoods.
+// For instance, you may use to link cities (by name, NV = string) with distances (LV=float32)
 type ValueBasedGraph[NV comparable, LV comparable] interface {
 	// SetLink set a value from a source to a destination, raises an error when failing.
 	// SetLink changes the value if any, or create the link otherwise.

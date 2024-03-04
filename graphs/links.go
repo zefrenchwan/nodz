@@ -12,3 +12,7 @@ type Link[N Node] interface {
 	// Destination of the link
 	Destination() N
 }
+
+// LinksIterator defines iterator over links.
+// In some circumstances, some graphs are too huge to just return a []Link.
+type LinksIterator[N Node, L Link[N]] GeneralIterator[L]
