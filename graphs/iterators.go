@@ -1,4 +1,4 @@
-package internal
+package graphs
 
 import "errors"
 

@@ -1,14 +1,14 @@
-package internal_test
+package graphs_test
 
 import (
 	"testing"
 
-	"github.com/zefrenchwan/nodz.git/internal"
+	"github.com/zefrenchwan/nodz.git/graphs"
 )
 
 func TestLocalIteratorNoValue(t *testing.T) {
 	values := make([]int, 0)
-	it := internal.NewLocalIterator(values)
+	it := graphs.NewLocalIterator(values)
 
 	if _, err := it.Value(); err == nil {
 		t.Fail()
@@ -21,7 +21,7 @@ func TestLocalIteratorNoValue(t *testing.T) {
 
 func TestLocalIteratorValues(t *testing.T) {
 	values := []int{10, 20}
-	it := internal.NewLocalIterator(values)
+	it := graphs.NewLocalIterator(values)
 
 	if _, err := it.Value(); err == nil {
 		t.Fail()

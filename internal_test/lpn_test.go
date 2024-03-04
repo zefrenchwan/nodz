@@ -8,8 +8,8 @@ import (
 )
 
 func TestEqualityForLPN(t *testing.T) {
-	node := internal.NewLabelPropertiesNode()
-	otherNode := internal.NewLabelPropertiesNode()
+	node := internal.NewLabelsPropertiesNode()
+	otherNode := internal.NewLabelsPropertiesNode()
 
 	if node.SameNode(nil) {
 		t.Fail()
@@ -25,7 +25,7 @@ func TestEqualityForLPN(t *testing.T) {
 }
 
 func TestLabelsForLPN(t *testing.T) {
-	node := internal.NewLabelPropertiesNode()
+	node := internal.NewLabelsPropertiesNode()
 
 	node.AddLabel("b")
 	node.AddLabel("a")
@@ -42,7 +42,7 @@ func TestLabelsForLPN(t *testing.T) {
 }
 
 func TestPropertiesForLPN(t *testing.T) {
-	node := internal.NewLabelPropertiesNode()
+	node := internal.NewLabelsPropertiesNode()
 
 	if v, found := node.GetProperty("a"); v != "" || found {
 		t.Fail()

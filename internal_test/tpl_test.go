@@ -7,8 +7,8 @@ import (
 )
 
 func TestTypePropertiesLinkCreation(t *testing.T) {
-	a := internal.NewLabelPropertiesNode()
-	b := internal.NewLabelPropertiesNode()
+	a := internal.NewLabelsPropertiesNode()
+	b := internal.NewLabelsPropertiesNode()
 	link := internal.NewTypePropertiesLink("link", &a, &b)
 	reverseLink := internal.NewTypePropertiesLink("link", &b, &a)
 
@@ -30,8 +30,8 @@ func TestTypePropertiesLinkCreation(t *testing.T) {
 }
 
 func TestTypePropertiesLinkProperties(t *testing.T) {
-	a := internal.NewLabelPropertiesNode()
-	b := internal.NewLabelPropertiesNode()
+	a := internal.NewLabelsPropertiesNode()
+	b := internal.NewLabelsPropertiesNode()
 	link := internal.NewTypePropertiesLink("link", &a, &b)
 
 	link.SetProperty("k", "v")
