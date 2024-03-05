@@ -13,7 +13,7 @@ So far, almost nothing. But plan is:
 * `graphs/` is about main definitions.  
 * `internal/` is about main implementations. 
 * Use of iterators: Some graphs are HUGE, so **iterators** is more flexible and efficient than slices (lazy loading / pagination)
-* `internal/local/`: split definitions and local implementations. **Local implementations** means "in memory", but it is key to split general definitions and local implementations.
+* `internal/local/`: split definitions and local implementations. **Local implementations** means "in memory", but are graph implementations special cases 
 
 ### Types of graph
 

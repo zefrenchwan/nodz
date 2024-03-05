@@ -7,10 +7,14 @@ package graphs
 // Given the undirected link a - link - b, then b is the neighbor of a, and vice versa.
 // Given the directed link a - link -> b, b is in the neighborhood of a, but not the other way around.
 type Link[N Node] interface {
+	// Test if link is the same as another one
+	SameLink(other Link[N]) bool
 	// Source of the link
 	Source() N
 	// Destination of the link
 	Destination() N
+	// IsDirected returns true for directed links, false for undirected
+	IsDirected() bool
 }
 
 // LinksIterator defines iterator over links.

@@ -37,8 +37,8 @@ type ValueBasedGraph[NV comparable, LV comparable] interface {
 // This structure is less intuitive (depending on your intuition...) than a value based graph, but it offers way more options.
 // Because it allows a distributed storage version, all functions may return an error.
 type CentralStructureGraph[N Node, L Link[N]] interface {
-	// SetLink uperts a link in the graph
-	SetLink(L) error
+	// AddLink adds a node in the graph, upserts its value if any, does nothing for same content
+	AddLink(L) error
 	// RemoveLink removes a link but keeps the nodes
 	RemoveLink(L) error
 	// AddNode adds a non existing node, does nothing for an existing one
@@ -47,8 +47,6 @@ type CentralStructureGraph[N Node, L Link[N]] interface {
 	RemoveNode(N) error
 	// AllNodes returns an iterator over all the nodes. Each node appearts exactly once
 	AllNodes() (NodesIterator[N], error)
-	// AllLinks returns an iterator over all the links. Each link appearts exactly once
-	AllLinks() (LinksIterator[N, L], error)
 	// Neighbors returns the neighborhood of a node
 	Neighbors(N) (Neighborhood[N, L], error)
 }
