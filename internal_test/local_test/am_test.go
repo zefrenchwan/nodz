@@ -7,9 +7,8 @@ import (
 	"github.com/zefrenchwan/nodz.git/graphs"
 	"github.com/zefrenchwan/nodz.git/internal"
 	"github.com/zefrenchwan/nodz.git/internal/local"
+	"github.com/zefrenchwan/nodz.git/internal_test"
 )
-
-type ValuedLinkPropertiesNode internal.ValuedLink[*internal.PropertiesNode, int]
 
 func TestAdjacencyMatrixNodes(t *testing.T) {
 	graph := local.NewAdjacencyMatrix[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
@@ -102,20 +101,16 @@ func TestAdjacencyMatrixLinks(t *testing.T) {
 		t.Errorf("error for source undirected degree. Expected 1, got %d", neighbors.UndirectedDegree())
 	} else if it, errIt := neighbors.Links(); errIt != nil {
 		t.Fail()
-	} else if has, errHas := it.Next(); !has || errHas != nil {
-		t.Fail()
-	} else if v, errV := it.Value(); errV != nil || !linkSourceDest1.SameLink(v) {
-		t.Fail()
-	} else if has, errHas = it.Next(); !has || errHas != nil {
-		t.Fail()
-	} else if v, errV = it.Value(); errV != nil || !linkSourceDest2.SameLink(v) {
-		t.Fail()
-	} else if has, errHas = it.Next(); !has || errHas != nil {
-		t.Fail()
-	} else if v, errV = it.Value(); errV != nil || !linkSourceIntermed.SameLink(v) {
-		t.Fail()
-	} else if has, errHas = it.Next(); has || errHas != nil {
-		t.Fail()
+	} else {
+		// order may differ, no iteration
+		localCompare := func(a, b internal.ValuedLink[*internal.PropertiesNode, int]) bool {
+			return a.SameLink(b)
+		}
+
+		expected := []internal.ValuedLink[*internal.PropertiesNode, int]{linkSourceDest1, linkSourceDest2, linkSourceIntermed}
+		if res, errComp := internal_test.CompareIteratorWithSlice(it, expected, localCompare, false); !res || errComp != nil {
+			t.Error("expected links do not match for source")
+		}
 	}
 
 	// test directed link no outgoing
@@ -199,20 +194,16 @@ func TestAdjacencyMatrixRemoveLink(t *testing.T) {
 		t.Error("source stats failure")
 	} else if it, errIt := neighbors.Links(); errIt != nil {
 		t.Fail()
-	} else if has, errHas := it.Next(); !has || errHas != nil {
-		t.Error("expected first value for source")
-	} else if v, errV := it.Value(); errV != nil || !linkSourceDest1.SameLink(v) {
-		t.Error("expected linkSourceDest1 for source")
-	} else if has, errHas = it.Next(); !has || errHas != nil {
-		t.Error("expected second value for source")
-	} else if v, errV = it.Value(); errV != nil || !linkSourceDest2.SameLink(v) {
-		t.Error("expected linkSourceDest2 for source")
-	} else if has, errHas = it.Next(); !has || errHas != nil {
-		t.Error("expected third and last value for source")
-	} else if v, errV = it.Value(); errV != nil || !linkSourceIntermed.SameLink(v) {
-		t.Error("expected linkSrouceIntermed for source")
-	} else if has, errHas = it.Next(); has || errHas != nil {
-		t.Error("expected 3 values, got more")
+	} else {
+		// order may differ, no iteration
+		localCompare := func(a, b internal.ValuedLink[*internal.PropertiesNode, int]) bool {
+			return a.SameLink(b)
+		}
+
+		expected := []internal.ValuedLink[*internal.PropertiesNode, int]{linkSourceDest1, linkSourceDest2, linkSourceIntermed}
+		if res, errComp := internal_test.CompareIteratorWithSlice(it, expected, localCompare, false); !res || errComp != nil {
+			t.Error("expected links do not match for source")
+		}
 	}
 
 	// dest2 should have one incoming node
@@ -309,16 +300,16 @@ func TestAdjacencyMatrixRemoveNode(t *testing.T) {
 		t.Fail()
 	} else if it, errIt := neighbors.Links(); errIt != nil {
 		t.Fail()
-	} else if has, errHas := it.Next(); !has || errHas != nil {
-		t.Fail()
-	} else if v, errV := it.Value(); errV != nil || !linkSourceDest1.SameLink(v) {
-		t.Fail()
-	} else if has, errHas = it.Next(); !has || errHas != nil {
-		t.Fail()
-	} else if v, errV = it.Value(); errV != nil || !linkSourceDest2.SameLink(v) {
-		t.Fail()
-	} else if has, errHas = it.Next(); has || errHas != nil {
-		t.Fail()
+	} else {
+		// order may differ, no iteration
+		localCompare := func(a, b internal.ValuedLink[*internal.PropertiesNode, int]) bool {
+			return a.SameLink(b)
+		}
+
+		expected := []internal.ValuedLink[*internal.PropertiesNode, int]{linkSourceDest1, linkSourceDest2}
+		if res, errComp := internal_test.CompareIteratorWithSlice(it, expected, localCompare, false); !res || errComp != nil {
+			t.Error("expected links do not match for source")
+		}
 	}
 
 	graph.RemoveNode(&dest2)

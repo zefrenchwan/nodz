@@ -15,14 +15,14 @@ type AdjacencyMatrix[N graphs.Node, L graphs.Link[N]] struct {
 	// bijective slice to link nodes and their index
 	nodes []N
 	// content is a map, keys are nodes index, values are nodes metadata and their outgoing links
-	content map[int]adjacencyItem[N, L]
+	content map[int]adjacencyLine[N, L]
 }
 
 // NewAdjacencyMatrix returns a new empty adjacency matrix as a central structure graph
 func NewAdjacencyMatrix[N graphs.Node, L graphs.Link[N]]() AdjacencyMatrix[N, L] {
 	return AdjacencyMatrix[N, L]{
 		nodes:   make([]N, 0),
-		content: make(map[int]adjacencyItem[N, L]),
+		content: make(map[int]adjacencyLine[N, L]),
 	}
 }
 
@@ -73,6 +73,7 @@ func (am *AdjacencyMatrix[N, L]) AddLink(link L) error {
 	return nil
 }
 
+// RemoveLink removes a link if any, does nothing otherwise
 func (am *AdjacencyMatrix[N, L]) RemoveLink(link L) error {
 	source := link.Source()
 	dest := link.Destination()
@@ -151,14 +152,25 @@ func (am *AdjacencyMatrix[N, L]) setLink(sourceIndex, destIndex int, link L) {
 	}
 }
 
-type adjacencyItem[N graphs.Node, L graphs.Link[N]] struct {
-	incomingCounter   int64
-	outgoingCounter   int64
+// adjacencyLine is the outgoings links (or undirected links seen as outgoing links) and node stats.
+// It makes no sense alone, it is always to consider with the node it represents (the source) in mind.
+type adjacencyLine[N graphs.Node, L graphs.Link[N]] struct {
+	// incomingCounter keeps counter for directed incoming links
+	incomingCounter int64
+	// outgoingCounter keeps counter for directed outgoing links
+	outgoingCounter int64
+	// undirectedCounter keeps counter for undirected nodes seen as outgoing links
 	undirectedCounter int64
-	values            map[int][]L
+	// Values are the links outgoing from source node.
+	// But, in general, there may be many nodes with the same source and destination.
+	// So we store index of destination node and all links with same source and destination.
+	// In particular, for undirected links, they are stored twice.
+	values map[int][]L
 }
 
-func (a *adjacencyItem[N, L]) removeNode(nodeIndex int) {
+// removeNode removes the nodes and changes counters.
+// So, set back the value in the graph map
+func (a *adjacencyLine[N, L]) removeNode(nodeIndex int) {
 	if a == nil || a.values == nil {
 		return
 	}
@@ -185,7 +197,9 @@ func (a *adjacencyItem[N, L]) removeNode(nodeIndex int) {
 	a.undirectedCounter = a.undirectedCounter - countUndirected
 }
 
-func (a *adjacencyItem[N, L]) addLink(destinationIndex int, link L) bool {
+// addLink adds the link if not already there, returns true if one link was inserted, false otherwise.
+// If there was an actual insertion, set back the value in the graph map
+func (a *adjacencyLine[N, L]) addLink(destinationIndex int, link L) bool {
 	if a == nil {
 		return false
 	} else if a.values == nil {
@@ -224,7 +238,9 @@ func (a *adjacencyItem[N, L]) addLink(destinationIndex int, link L) bool {
 	return added
 }
 
-func (a *adjacencyItem[N, L]) removeLink(destinationIndex int, link L) bool {
+// removeLink removes the link if any, returns true if one link was removed, false otherwise.
+// If there was an actual deletion, set back the value in the graph map
+func (a *adjacencyLine[N, L]) removeLink(destinationIndex int, link L) bool {
 	if a == nil {
 		return false
 	}
@@ -253,7 +269,7 @@ func (a *adjacencyItem[N, L]) removeLink(destinationIndex int, link L) bool {
 }
 
 // toNeighborhood constructs a new neighborhood for a given source
-func (a *adjacencyItem[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
+func (a *adjacencyLine[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
 	result := internal.NeighborsIterator[N, L]{}
 	if a == nil {
 		return result

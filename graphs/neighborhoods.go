@@ -5,7 +5,9 @@ package graphs
 // So, to include all options, three functions appear for degrees : incoming, outgoing, and undirected.
 type Neighborhood[N Node, L Link[N]] interface {
 	// Links returns the neighborhood as a way to iterate over links.
-	// But no need to embed a full iterator if we want to have node metadata, so you may lazy load the iterator
+	// But no need to embed a full iterator if we want to have node metadata, so you may lazy load the iterator.
+	// NOTE : there is absolutely no warranty about the links order !
+	// For instance, some implementations use maps, so no order is provided when iterating over the values.
 	Links() (LinksIterator[N, L], error)
 	// IncomingDegree returns the number of nodes that have current node as their destination.
 	// For undirected link, just use undirected degree
