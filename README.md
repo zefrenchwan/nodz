@@ -21,6 +21,17 @@ So far, almost nothing. But plan is:
 2. **Central**StructureGraph: linked nodes and you need global operations (all nodes iterations, adjacency matrix, etc)
 3. **Peers**StructureGraph: linked nodes but you discover graph from a node. **No** global operations
 
+So far: 
+
+| Type | Implementation | Local | Directed |
+|------|----------------|-------|-----------|
+| Value | [DirectedValuesGraph](https://github.com/zefrenchwan/nodz/blob/main/internal/local/directed_value_graphs.go) | YES | YES |
+| Central | [AdjacencyMatrix](https://github.com/zefrenchwan/nodz/blob/main/internal/local/adjacency_matrices.go) | YES | MIXED |
+
+### Wait, what ? Show me some examples ! 
+
+Sure, have a look at `internal_test/local_test` and start with value based graphs. 
+
 ## You like graphs or network science ? 
 
 Anything provided here is my personal opinion.
@@ -37,3 +48,7 @@ Anything provided here is my personal opinion.
 ### Books 
 
 * **Barabasi, Networks Science**: very interesting but it is more about ideas than a real course. I would not recommand it as a first read about network science.
+
+### Videos
+
+* FASCINATING phenomenon : [percolation](https://www.youtube.com/watch?v=a-767WnbaCQ)
