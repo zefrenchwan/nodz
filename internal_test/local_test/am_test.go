@@ -332,4 +332,18 @@ func TestAdjacencyMatrixRemoveNode(t *testing.T) {
 	} else if has, errHas = it.Next(); has || errHas != nil {
 		t.Fail()
 	}
+
+	it, errIt := graph.AllNodes()
+	if errIt != nil {
+		t.Fail()
+	}
+
+	localCompare := func(a, b *internal.PropertiesNode) bool {
+		return a.SameNode(b)
+	}
+
+	expected := []*internal.PropertiesNode{&source, &dest1, &dest3}
+	if res, errComp := internal_test.CompareIteratorWithSlice(it, expected, localCompare, false); !res || errComp != nil {
+		t.Error("expected nodes do not match for graph")
+	}
 }

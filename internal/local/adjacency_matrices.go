@@ -13,33 +13,33 @@ import (
 // It means that, for some algorithms involving matrix operations, link has to be processed to return an int or a float, or...
 type AdjacencyMatrix[N graphs.Node, L graphs.Link[N]] struct {
 	// bijective slice to link nodes and their index
-	nodes []N
+	nodes increasingMapping[N]
 	// content is a map, keys are nodes index, values are nodes metadata and their outgoing links
 	content map[int]adjacencyLine[N, L]
 }
 
 // NewAdjacencyMatrix returns a new empty adjacency matrix as a central structure graph
 func NewAdjacencyMatrix[N graphs.Node, L graphs.Link[N]]() AdjacencyMatrix[N, L] {
+	nodesTest := func(a, b N) bool {
+		return a.SameNode(b)
+	}
+
 	return AdjacencyMatrix[N, L]{
-		nodes:   make([]N, 0),
+		nodes:   newIncreasingMapping(nodesTest),
 		content: make(map[int]adjacencyLine[N, L]),
 	}
 }
 
 // AddNode adds a node if it did not exist, does nothing otherwise.
 func (am *AdjacencyMatrix[N, L]) AddNode(node N) error {
-	index := am.nodeIndex(node)
-	if index < 0 {
-		am.nodes = append(am.nodes, node)
-	}
-
+	am.nodes.addValue(node)
 	return nil
 }
 
 // RemoveNode removes a node and all its links
 func (am *AdjacencyMatrix[N, L]) RemoveNode(node N) error {
-	targetIndex := am.nodeIndex(node)
-	if targetIndex < 0 {
+	targetIndex, found := am.nodes.getValue(node)
+	if !found {
 		return nil
 	}
 
@@ -49,6 +49,8 @@ func (am *AdjacencyMatrix[N, L]) RemoveNode(node N) error {
 		am.content[key] = lines
 	}
 
+	am.nodes.removeValue(node)
+
 	return nil
 }
 
@@ -56,20 +58,10 @@ func (am *AdjacencyMatrix[N, L]) RemoveNode(node N) error {
 func (am *AdjacencyMatrix[N, L]) AddLink(link L) error {
 	source := link.Source()
 	dest := link.Destination()
-	sourceIndex := am.nodeIndex(source)
-	destIndex := am.nodeIndex(dest)
-
-	if sourceIndex < 0 {
-		sourceIndex = len(am.nodes)
-		am.nodes = append(am.nodes, source)
-	}
-
-	if destIndex < 0 {
-		destIndex = len(am.nodes)
-		am.nodes = append(am.nodes, dest)
-	}
-
+	sourceIndex := am.nodes.addValue(source)
+	destIndex := am.nodes.addValue(dest)
 	am.setLink(sourceIndex, destIndex, link)
+
 	return nil
 }
 
@@ -77,10 +69,10 @@ func (am *AdjacencyMatrix[N, L]) AddLink(link L) error {
 func (am *AdjacencyMatrix[N, L]) RemoveLink(link L) error {
 	source := link.Source()
 	dest := link.Destination()
-	sourceIndex := am.nodeIndex(source)
-	destIndex := am.nodeIndex(dest)
+	sourceIndex, foundSource := am.nodes.getValue(source)
+	destIndex, foundDest := am.nodes.getValue(dest)
 
-	if sourceIndex < 0 || destIndex < 0 {
+	if !foundSource || !foundDest {
 		return nil
 	}
 
@@ -104,35 +96,19 @@ func (am *AdjacencyMatrix[N, L]) RemoveLink(link L) error {
 
 // AllNodes returns an iterator over nodes
 func (am *AdjacencyMatrix[N, L]) AllNodes() (graphs.NodesIterator[N], error) {
-	it := NewSlicesIterator(am.nodes)
-	return &it, nil
+	return am.nodes.toIterator(), nil
 }
 
 // Neighbors returns the neighborhood of the node (metadata and iterators factory)
 func (am *AdjacencyMatrix[N, L]) Neighbors(node N) (graphs.Neighborhood[N, L], error) {
-	index := am.nodeIndex(node)
-	if index < 0 {
+	index, found := am.nodes.getValue(node)
+	if !found {
 		return nil, nil
 	}
 
 	adjacencyValue := am.content[index]
 
 	return adjacencyValue.toNeighborhood(), nil
-}
-
-// nodeIndex gets the index of a node, -1 for no node found
-func (am *AdjacencyMatrix[N, L]) nodeIndex(node N) int {
-	if am == nil || am.nodes == nil {
-		return -1
-	}
-
-	for index, value := range am.nodes {
-		if node.SameNode(value) {
-			return index
-		}
-	}
-
-	return -1
 }
 
 // setLink adds a link at a given index
