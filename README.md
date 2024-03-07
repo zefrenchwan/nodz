@@ -26,7 +26,7 @@ So far:
 | Type | Implementation | Local | Directed |
 |------|----------------|-------|-----------|
 | Value | [DirectedValuesGraph](https://github.com/zefrenchwan/nodz/blob/main/internal/local/directed_value_graphs.go) | YES | YES |
-| Central | [AdjacencyMatrix](https://github.com/zefrenchwan/nodz/blob/main/internal/local/adjacency_matrices.go) | YES | MIXED |
+| Central | [MapGraph](https://github.com/zefrenchwan/nodz/blob/main/internal/local/map_graphs.go) | YES | MIXED |
 
 ### Wait, what ? Show me some examples ! 
 

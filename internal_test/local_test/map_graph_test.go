@@ -11,7 +11,7 @@ import (
 )
 
 func TestAdjacencyMatrixNodes(t *testing.T) {
-	graph := local.NewAdjacencyMatrix[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
 
 	source := internal.NewPropertiesNode()
 	dest1 := internal.NewPropertiesNode()
@@ -61,7 +61,7 @@ func TestAdjacencyMatrixNodes(t *testing.T) {
 }
 
 func TestAdjacencyMatrixLinks(t *testing.T) {
-	graph := local.NewAdjacencyMatrix[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
 
 	source := internal.NewPropertiesNode()
 	dest1 := internal.NewPropertiesNode()
@@ -155,7 +155,7 @@ func TestAdjacencyMatrixLinks(t *testing.T) {
 }
 
 func TestAdjacencyMatrixRemoveLink(t *testing.T) {
-	graph := local.NewAdjacencyMatrix[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
 
 	source := internal.NewPropertiesNode()
 	dest1 := internal.NewPropertiesNode()
@@ -260,7 +260,7 @@ func TestAdjacencyMatrixRemoveLink(t *testing.T) {
 }
 
 func TestAdjacencyMatrixRemoveNode(t *testing.T) {
-	graph := local.NewAdjacencyMatrix[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
 
 	source := internal.NewPropertiesNode()
 	dest1 := internal.NewPropertiesNode()
@@ -345,5 +345,77 @@ func TestAdjacencyMatrixRemoveNode(t *testing.T) {
 	expected := []*internal.PropertiesNode{&source, &dest1, &dest3}
 	if res, errComp := internal_test.CompareIteratorWithSlice(it, expected, localCompare, false); !res || errComp != nil {
 		t.Error("expected nodes do not match for graph")
+	}
+}
+
+func TestMatrix(t *testing.T) {
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+
+	dest := internal.NewPropertiesNode()
+	source1 := internal.NewPropertiesNode()
+	source2 := internal.NewPropertiesNode()
+	alone := internal.NewPropertiesNode()
+
+	linkSource1Dest := internal.NewDirectedValuedLink(&source1, &dest, 10)
+	linkSource2Dest1 := internal.NewDirectedValuedLink(&source2, &dest, 20)
+	linkSource2Dest2 := internal.NewDirectedValuedLink(&source2, &dest, 30)
+
+	graph.AddLink(linkSource1Dest)
+	graph.AddLink(linkSource2Dest1)
+	graph.AddLink(linkSource2Dest2)
+	graph.AddNode(&alone)
+
+	counter := func(links []internal.ValuedLink[*internal.PropertiesNode, int]) int {
+		return len(links)
+	}
+
+	mapping, matrix := local.ToMatrix(&graph, counter)
+
+	if len(mapping) != 4 {
+		t.Fail()
+	}
+
+	// find index of each node.
+	// Node not comparable means no map, so .... Here we go....
+	var indexSource1, indexSource2, indexDest int
+	for index, node := range mapping {
+		switch {
+		case source1.SameNode(node):
+			indexSource1 = index
+		case source2.SameNode(node):
+			indexSource2 = index
+		case alone.SameNode(node):
+			_ = index
+		case dest.SameNode(node):
+			indexDest = index
+		default:
+			t.Error("unexpected node")
+		}
+	}
+
+	if matrix.Size() != 4 {
+		t.Fail()
+	}
+
+	var value int
+	if value, _, _ := matrix.GetValue(indexSource1, indexDest); value != 1 {
+		t.Error("expected one link from source1 to dest")
+	}
+
+	if value, _, _ := matrix.GetValue(indexSource2, indexDest); value != 2 {
+		t.Error("expected one link from source2 to dest")
+	}
+
+	// rest should be 0, so global sum should be 3
+	sum := 0
+	for i := 0; i < matrix.Size(); i++ {
+		for j := 0; j < matrix.Size(); j++ {
+			value, _, _ = matrix.GetValue(i, j)
+			sum = sum + value
+		}
+	}
+
+	if sum != 3 {
+		t.Errorf("expected 3 as sum, got %d", sum)
 	}
 }

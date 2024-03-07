@@ -1,6 +1,10 @@
 package local
 
-import "github.com/zefrenchwan/nodz.git/graphs"
+import (
+	"slices"
+
+	"github.com/zefrenchwan/nodz.git/graphs"
+)
 
 // increasingMapping is a mapping from V to int with increasing values
 type increasingMapping[V any] struct {
@@ -64,4 +68,54 @@ func (im *increasingMapping[V]) toIterator() graphs.GeneralIterator[V] {
 
 	it := NewSlicesIterator(values)
 	return &it
+}
+
+// size returns the size of the mapping
+func (im *increasingMapping[V]) size() int {
+	return len(im.values)
+}
+
+// toIncreasingIndexes returns the sorted indexes of the values as a map.
+// Key is the source index (for instance 10) and value is increasing int from 0 to size - 1
+// Basically, it is the only increasing mapping from values to {0, size -1}
+func (im *increasingMapping[V]) toIncreasingIndexes() map[int]int {
+	if im == nil || im.values == nil {
+		return nil
+	}
+
+	indexes := make([]int, len(im.values))
+	index := 0
+	for k := range im.values {
+		indexes[index] = k
+		index++
+	}
+
+	slices.Sort(indexes)
+
+	result := make(map[int]int)
+	for index, value := range indexes {
+		result[value] = index
+	}
+
+	return result
+}
+
+// toIncreasingValues returns the values in a slice, forming an increasing mapping from im.values.
+// It means that if a,A and b,B are in im.values and a < b, then A is before B in the result.
+func (im *increasingMapping[V]) toIncreasingValues() []V {
+	if im == nil || im.values == nil {
+		return nil
+	}
+
+	// To do so, we get the indexes of the elements,
+	// we sort them to get the final order, so we have indexes in the right order.
+	// And then we get elements in the same order as the sorted indexes
+	indexes := im.toIncreasingIndexes()
+
+	result := make([]V, len(indexes))
+	for i, k := range indexes {
+		result[i] = im.values[k]
+	}
+
+	return result
 }

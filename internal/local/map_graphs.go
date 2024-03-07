@@ -7,37 +7,35 @@ import (
 	"github.com/zefrenchwan/nodz.git/internal"
 )
 
-// AdjacencyMatrix contains the links for source and destination.
-// Definition is often true or false for non valued graphs, the values for valued graphs.
-// This implementation stores the link as a whole : given a source and destination, stored value is the link.
-// It means that, for some algorithms involving matrix operations, link has to be processed to return an int or a float, or...
-type AdjacencyMatrix[N graphs.Node, L graphs.Link[N]] struct {
+// MapGraph contains the links for source and destination.
+type MapGraph[N graphs.Node, L graphs.Link[N]] struct {
 	// bijective slice to link nodes and their index
 	nodes increasingMapping[N]
-	// content is a map, keys are nodes index, values are nodes metadata and their outgoing links
-	content map[int]adjacencyLine[N, L]
+	// content is a map, keys are nodes index, values are nodes metadata and their outgoing links.
+	// It does NOT contain all the nodes, just the ones with at least one link.
+	content map[int]mapLine[N, L]
 }
 
-// NewAdjacencyMatrix returns a new empty adjacency matrix as a central structure graph
-func NewAdjacencyMatrix[N graphs.Node, L graphs.Link[N]]() AdjacencyMatrix[N, L] {
+// NewMapGraph returns a new empty map matrix as a central structure graph
+func NewMapGraph[N graphs.Node, L graphs.Link[N]]() MapGraph[N, L] {
 	nodesTest := func(a, b N) bool {
 		return a.SameNode(b)
 	}
 
-	return AdjacencyMatrix[N, L]{
+	return MapGraph[N, L]{
 		nodes:   newIncreasingMapping(nodesTest),
-		content: make(map[int]adjacencyLine[N, L]),
+		content: make(map[int]mapLine[N, L]),
 	}
 }
 
 // AddNode adds a node if it did not exist, does nothing otherwise.
-func (am *AdjacencyMatrix[N, L]) AddNode(node N) error {
+func (am *MapGraph[N, L]) AddNode(node N) error {
 	am.nodes.addValue(node)
 	return nil
 }
 
 // RemoveNode removes a node and all its links
-func (am *AdjacencyMatrix[N, L]) RemoveNode(node N) error {
+func (am *MapGraph[N, L]) RemoveNode(node N) error {
 	targetIndex, found := am.nodes.getValue(node)
 	if !found {
 		return nil
@@ -55,7 +53,7 @@ func (am *AdjacencyMatrix[N, L]) RemoveNode(node N) error {
 }
 
 // AddLink adds a link (may be directed or undirected) if not already here
-func (am *AdjacencyMatrix[N, L]) AddLink(link L) error {
+func (am *MapGraph[N, L]) AddLink(link L) error {
 	source := link.Source()
 	dest := link.Destination()
 	sourceIndex := am.nodes.addValue(source)
@@ -66,7 +64,7 @@ func (am *AdjacencyMatrix[N, L]) AddLink(link L) error {
 }
 
 // RemoveLink removes a link if any, does nothing otherwise
-func (am *AdjacencyMatrix[N, L]) RemoveLink(link L) error {
+func (am *MapGraph[N, L]) RemoveLink(link L) error {
 	source := link.Source()
 	dest := link.Destination()
 	sourceIndex, foundSource := am.nodes.getValue(source)
@@ -95,42 +93,76 @@ func (am *AdjacencyMatrix[N, L]) RemoveLink(link L) error {
 }
 
 // AllNodes returns an iterator over nodes
-func (am *AdjacencyMatrix[N, L]) AllNodes() (graphs.NodesIterator[N], error) {
+func (am *MapGraph[N, L]) AllNodes() (graphs.NodesIterator[N], error) {
 	return am.nodes.toIterator(), nil
 }
 
 // Neighbors returns the neighborhood of the node (metadata and iterators factory)
-func (am *AdjacencyMatrix[N, L]) Neighbors(node N) (graphs.Neighborhood[N, L], error) {
+func (am *MapGraph[N, L]) Neighbors(node N) (graphs.Neighborhood[N, L], error) {
 	index, found := am.nodes.getValue(node)
 	if !found {
 		return nil, nil
 	}
 
-	adjacencyValue := am.content[index]
+	mapValue := am.content[index]
 
-	return adjacencyValue.toNeighborhood(), nil
+	return mapValue.toNeighborhood(), nil
+}
+
+// ToMatrix maps a graph as a matrix of nodes with values.
+// N is nodes type
+// L is link type
+// S is type of the elements of the matrix
+// linksMapper maps all links from i to j to an instance of S
+// Result is mapping between indexes and nodes, and the matrix per se.
+// And, at position (i,j), the instance of S is linksMapper of all the links from i to j.
+// Remember that N is not comparable, so []N result is a way to say without a map: index of this node is this int.
+// As an example of use, to get the adjacency matrix (the number of links from i to j),
+// linksMapper would just count the number of directed links.
+func ToMatrix[N graphs.Node, L graphs.Link[N], S any](am *MapGraph[N, L], linksMapper func([]L) S) ([]N, graphs.Matrix[S]) {
+	if am == nil || linksMapper == nil {
+		return nil, nil
+	}
+
+	// make result
+	defaultValue := linksMapper(nil)
+	expectedSize := am.nodes.size()
+	result := NewMapMatrix[S](expectedSize, defaultValue)
+	// index of elements still in the map may not be contiguous ints (due to removes)
+	matrixIndexMapping := am.nodes.toIncreasingIndexes()
+	// for each link, find index of source and destination in matrix and fill matrix
+	for sourceIndex, line := range am.content {
+		matrixSourceIndex := matrixIndexMapping[sourceIndex]
+		for destIndex, links := range line.values {
+			matrixDestIndex := matrixIndexMapping[destIndex]
+			result.SetValue(matrixSourceIndex, matrixDestIndex, linksMapper(links))
+		}
+	}
+
+	arrayOfNodes := am.nodes.toIncreasingValues()
+	return arrayOfNodes, &result
 }
 
 // setLink adds a link at a given index
-func (am *AdjacencyMatrix[N, L]) setLink(sourceIndex, destIndex int, link L) {
-	adjacencyValue := am.content[sourceIndex]
-	adjacencyValue.addLink(destIndex, link)
-	am.content[sourceIndex] = adjacencyValue
+func (am *MapGraph[N, L]) setLink(sourceIndex, destIndex int, link L) {
+	mapValue := am.content[sourceIndex]
+	mapValue.addLink(destIndex, link)
+	am.content[sourceIndex] = mapValue
 
 	if !link.IsDirected() {
-		adjacencyValue = am.content[destIndex]
-		adjacencyValue.addLink(sourceIndex, link)
-		am.content[destIndex] = adjacencyValue
+		mapValue = am.content[destIndex]
+		mapValue.addLink(sourceIndex, link)
+		am.content[destIndex] = mapValue
 	} else {
-		adjacencyValue = am.content[destIndex]
-		adjacencyValue.incomingCounter = adjacencyValue.incomingCounter + 1
-		am.content[destIndex] = adjacencyValue
+		mapValue = am.content[destIndex]
+		mapValue.incomingCounter = mapValue.incomingCounter + 1
+		am.content[destIndex] = mapValue
 	}
 }
 
-// adjacencyLine is the outgoings links (or undirected links seen as outgoing links) and node stats.
+// mapLine is the outgoings links (or undirected links seen as outgoing links) and node stats.
 // It makes no sense alone, it is always to consider with the node it represents (the source) in mind.
-type adjacencyLine[N graphs.Node, L graphs.Link[N]] struct {
+type mapLine[N graphs.Node, L graphs.Link[N]] struct {
 	// incomingCounter keeps counter for directed incoming links
 	incomingCounter int64
 	// outgoingCounter keeps counter for directed outgoing links
@@ -146,7 +178,7 @@ type adjacencyLine[N graphs.Node, L graphs.Link[N]] struct {
 
 // removeNode removes the nodes and changes counters.
 // So, set back the value in the graph map
-func (a *adjacencyLine[N, L]) removeNode(nodeIndex int) {
+func (a *mapLine[N, L]) removeNode(nodeIndex int) {
 	if a == nil || a.values == nil {
 		return
 	}
@@ -175,7 +207,7 @@ func (a *adjacencyLine[N, L]) removeNode(nodeIndex int) {
 
 // addLink adds the link if not already there, returns true if one link was inserted, false otherwise.
 // If there was an actual insertion, set back the value in the graph map
-func (a *adjacencyLine[N, L]) addLink(destinationIndex int, link L) bool {
+func (a *mapLine[N, L]) addLink(destinationIndex int, link L) bool {
 	if a == nil {
 		return false
 	} else if a.values == nil {
@@ -216,7 +248,7 @@ func (a *adjacencyLine[N, L]) addLink(destinationIndex int, link L) bool {
 
 // removeLink removes the link if any, returns true if one link was removed, false otherwise.
 // If there was an actual deletion, set back the value in the graph map
-func (a *adjacencyLine[N, L]) removeLink(destinationIndex int, link L) bool {
+func (a *mapLine[N, L]) removeLink(destinationIndex int, link L) bool {
 	if a == nil {
 		return false
 	}
@@ -245,7 +277,7 @@ func (a *adjacencyLine[N, L]) removeLink(destinationIndex int, link L) bool {
 }
 
 // toNeighborhood constructs a new neighborhood for a given source
-func (a *adjacencyLine[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
+func (a *mapLine[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
 	result := internal.NeighborsIterator[N, L]{}
 	if a == nil {
 		return result
