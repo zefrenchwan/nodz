@@ -403,7 +403,7 @@ func TestMatrix(t *testing.T) {
 	}
 
 	if value, _, _ := matrix.GetValue(indexSource2, indexDest); value != 2 {
-		t.Error("expected one link from source2 to dest")
+		t.Error("expected two links from source2 to dest")
 	}
 
 	// rest should be 0, so global sum should be 3
