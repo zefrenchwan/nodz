@@ -76,6 +76,20 @@ func (tpl *TypePropertiesLink[N]) Properties() map[string]string {
 	return result
 }
 
+// PropertyKeys returns the key of each property
+func (tpl *TypePropertiesLink[N]) PropertyKeys() []string {
+	if tpl == nil {
+		return nil
+	}
+
+	result := make([]string, 0)
+	for k := range tpl.linkProperties {
+		result = append(result, k)
+	}
+
+	return result
+}
+
 // SetProperty adds (or changes) this property of a link
 func (tpl *TypePropertiesLink[N]) SetProperty(key, value string) {
 	if tpl != nil {

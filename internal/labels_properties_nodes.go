@@ -97,6 +97,19 @@ func (lpn *LabelsPropertiesNode) Properties() map[string]string {
 	return result
 }
 
+func (lpn *LabelsPropertiesNode) PropertyKeys() []string {
+	if lpn == nil {
+		return nil
+	}
+
+	result := make([]string, 0)
+	for k := range lpn.nodeProperties {
+		result = append(result, k)
+	}
+
+	return result
+}
+
 // SetProperty adds (or changes) this property of a node
 func (lpn *LabelsPropertiesNode) SetProperty(key, value string) {
 	if lpn != nil {

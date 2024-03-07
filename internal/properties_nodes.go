@@ -75,3 +75,12 @@ func (n *PropertiesNode) PropertyKeys() []string {
 
 	return result
 }
+
+// RemoveProperty removes a property by key
+func (n *PropertiesNode) RemoveProperty(key string) {
+	if n == nil || n.nodeProperties == nil {
+		return
+	}
+
+	delete(n.nodeProperties, key)
+}
