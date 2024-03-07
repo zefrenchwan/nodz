@@ -1,6 +1,7 @@
 package graphs
 
-// WithProperties is a simple properties implementation, with no type (book)
+// WithProperties is a simple properties implementation, with no type.
+// It is basically an abstraction of a map[string]string
 type WithProperties interface {
 	// GetProperty returns the value of a property, if any (or empty, false)
 	GetProperty(key string) (string, bool)
