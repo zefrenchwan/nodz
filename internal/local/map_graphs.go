@@ -127,7 +127,9 @@ func ToMatrix[N graphs.Node, L graphs.Link[N], S any](am *MapGraph[N, L], linksM
 	// make result
 	defaultValue := linksMapper(nil)
 	expectedSize := am.nodes.size()
-	result := NewMapMatrix[S](expectedSize, defaultValue)
+	// size has been tested before, cannot raise error
+	result, _ := NewMapMatrix[S](expectedSize, defaultValue)
+
 	// index of elements still in the map may not be contiguous ints (due to removes)
 	matrixIndexMapping := am.nodes.toIncreasingIndexes()
 	// for each link, find index of source and destination in matrix and fill matrix

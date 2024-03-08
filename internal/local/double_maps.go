@@ -82,3 +82,16 @@ func (dm doubleMap[K, V]) removeValue(a, b K) {
 		delete(rows, b)
 	}
 }
+
+// getElementsLinkedToSecondaryKey is the map of primary keys and secondary values, with b as secondary keys
+func (dm doubleMap[K, V]) getElementsLinkedToSecondaryKey(b K) map[K]V {
+	result := make(map[K]V)
+	for index, secValues := range dm {
+		secValue, found := secValues[b]
+		if found {
+			result[index] = secValue
+		}
+	}
+
+	return result
+}

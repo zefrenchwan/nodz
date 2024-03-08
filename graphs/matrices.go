@@ -11,4 +11,8 @@ type Matrix[V any] interface {
 	// If there is no value, returns the default value, false.
 	// An error is allowed for implementations
 	GetValue(i, j int) (V, bool, error)
+	// Line returns the values, in order, for line i if any
+	Line(i int) (GeneralIterator[V], error)
+	// Column returns the values, in order, for column j if any
+	Column(j int) (GeneralIterator[V], error)
 }
