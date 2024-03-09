@@ -1,19 +1,23 @@
 # Nodz
 
 A project to play with graphs and test some ideas about networks science. 
+Full code is under MIT License. 
 
 ## Features
 
 So far, almost nothing. But plan is:
 * gephi export
 * random graphs (preferential attachment, GNP and GNL)
+* walkthroughs
+* graph data visualization (more to come, still digging on it)
+* observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
 
 ## Implementation details 
 
 * `graphs/` is about main definitions.  
 * `internal/` is about main implementations. 
-* Use of iterators: Some graphs are HUGE, so **iterators** is more flexible and efficient than slices (lazy loading / pagination)
-* `internal/local/`: split definitions and local implementations. **Local implementations** means "in memory", but are graph implementations special cases 
+* Use of iterators: Some graphs are HUGE, so  using **iterators** is more flexible and efficient than slices (lazy loading / pagination)
+* `internal/local/`: split definitions and local implementations. **Local implementations** are "in memory" implementations of general definitions 
 
 ### Types of graph
 
@@ -28,18 +32,24 @@ So far:
 | Value | [DirectedValuesGraph](https://github.com/zefrenchwan/nodz/blob/main/internal/local/directed_value_graphs.go) | YES | YES |
 | Central | [MapGraph](https://github.com/zefrenchwan/nodz/blob/main/internal/local/map_graphs.go) | YES | MIXED |
 
-### Wait, what ? Show me some examples ! 
+### Wait, what ? How do I start with your project ? 
 
-Sure, have a look at `internal_test/local_test` and start with value based graphs. 
+1. Start with [general definition of a graph](https://github.com/zefrenchwan/nodz/blob/main/graphs/structures.go) 
+2. Read `graphs/` interfaces if you need more details about `nodes`, `neighbors` or `links`. There should be no surprise, it is basic definition 
+3. Have a look at `internal_test/local_test` and start with value based graphs. Go on with central graphs tests
+4. Dig into implementation details if you like
 
 ## You like graphs or network science ? 
 
-Anything provided here is my personal opinion.
+This part is about links or mentions about graphs / network science related stuff. 
+It just is "hey, look at that if you want, I found it interesting". 
+I don't make money by advertising, I am not in position of any conflict of interest, it is pure personal opinion. 
 
 ### frameworks / show me some code
 
 * [Neo4j database](https://neo4j.com/), community version on premise is an excellent graph database. Neo4j is, to me, **very** pushy about its cloud solution (Aura). 
-* [Apache GraphX](https://spark.apache.org/graphx/): Played with it long ago, not the most active part of Spark, but something to dig  
+* [Apache GraphX](https://spark.apache.org/graphx/): Not a fan, but it exists and I wanted to mention it. Sounds more like an abandoned POC to me
+* [NetworkX](https://networkx.org/): perfect for its purpose, easy to use, powerful. If language is not a question, I would recommand Python and NetworkX for sure ! 
 
 ### Tools 
 
@@ -47,8 +57,14 @@ Anything provided here is my personal opinion.
 
 ### Books 
 
-* **Barabasi, Networks Science**: very interesting but it is more about ideas than a real course. I would not recommand it as a first read about network science.
+* **Barabasi: Networks Science**: Author has a style, many ideas, not a lot of details about some key parts. Brilliant, really good to understand complex networks ideas. But... Not for a first read, not at all.
+* **Mentzer, Fortunato, Davis: a first course in network science** : very good too, covers more topics and is easier, first read material for sure! 
+* **Boullier: Propagations** (in french). WHAT A BOOK ! Very clever ideas about propagations and related use of data. A source of inspiration to go further than technical implementations
 
 ### Videos
 
 * FASCINATING phenomenon : [percolation](https://www.youtube.com/watch?v=a-767WnbaCQ)
+
+### Not about graphs, but related somehow
+
+* **Russel, Norvig: Artificial intelligence**: THE book about AI. But get ready, it is a huge book that goes really in depth. Chapter 3 is excellent about exploration, and explains applications of graphs for walkthroughs
