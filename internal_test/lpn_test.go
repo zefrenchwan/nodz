@@ -60,3 +60,17 @@ func TestPropertiesForLPN(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestIdEquality(t *testing.T) {
+	node := internal.NewLabelsPropertiesNode()
+	sameNode := internal.NewIdNode(node.Id())
+	otherNode := internal.NewRandomIdNode()
+
+	if node.SameNode(otherNode) {
+		t.Fail()
+	}
+
+	if !sameNode.SameNode(&node) {
+		t.Fail()
+	}
+}
