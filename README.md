@@ -5,12 +5,28 @@ Full code is under MIT License.
 
 ## Features
 
-So far, almost nothing. But plan is:
-* gephi export
-* random graphs (preferential attachment, GNP and GNL)
+So far, implementing graphs core definitions. 
+
+### Next features (working on it)
+
+* basic stats: degree distribution, average size, etc
+* random graphs (preferential attachment, GNP)
 * walkthroughs
-* graph data visualization (more to come, still digging on it)
+
+### Features to implement one day
+
+* gephi import and export
+* neo4j import and export
 * observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
+
+And, still digging, but a must-have:
+* graph data visualization 
+
+### Features that sound like good ideas, but not sure yet
+
+* DSL for non technical use (create a random graph, print basic stats, etc)
+* Sort of jupyter interface to use that DSL
+* Data viz via an embedded server
 
 ## Implementation details 
 
@@ -57,7 +73,7 @@ I don't make money by advertising, I am not in position of any conflict of inter
 
 ### Books 
 
-* **Barabasi: Networks Science**: Author has a style, many ideas, not a lot of details about some key parts. Brilliant, really good to understand complex networks ideas. But... Not for a first read, not at all.
+* **Barabasi: Networks Science**: Author has a style, many ideas, not a lot of details about some key parts. Brilliant, really good to understand complex networks ideas. But... Not for a first read 
 * **Mentzer, Fortunato, Davis: a first course in network science** : very good too, covers more topics and is easier, first read material for sure! 
 * **Boullier: Propagations** (in french). WHAT A BOOK ! Very clever ideas about propagations and related use of data. A source of inspiration to go further than technical implementations
 
