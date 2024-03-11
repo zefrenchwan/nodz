@@ -8,10 +8,10 @@ Full code is under MIT License.
 So far:
 * implementing graphs core definitions (central graph, nodes, links, etc)
 * random graphs with preferential attachment (Barabasi Albert) and GNP (fixed nodes size, links by probability)
+* basic stats: degree distribution, size, etc
 
 ### Next features (working on it)
 
-* basic stats: degree distribution, average size, etc
 * walkthroughs
 
 ### Features to implement one day
@@ -28,6 +28,8 @@ And, still digging, but a must-have:
 * DSL for non technical use (create a random graph, print basic stats, etc)
 * Sort of jupyter interface to use that DSL
 * Data viz via an embedded server
+* Distibute calculation (but, a huge amount of work)
+
 
 ## Implementation details 
 

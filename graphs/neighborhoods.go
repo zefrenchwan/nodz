@@ -15,6 +15,6 @@ type Neighborhood[N Node, L Link[N]] interface {
 	// OutgoingDegree returns the number of nodes that have current node as their source.
 	// For undirected link, just use undirected degree
 	OutgoingDegree() int64
-	// Degree of the node for undirected links
+	// UndirectedDegree returns the degree of the node for undirected links
 	UndirectedDegree() int64
 }

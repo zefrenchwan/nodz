@@ -136,7 +136,8 @@ func (rm RandomGenerator[N, L]) UndirectedBarabasiAlbertGraph(
 		var destNode N
 		var destIndex int
 		// To do so, generate a value, sum until the random value is reached.
-		// When reached, the corresponding node is the destination node
+		// When reached, the corresponding node is the destination node.
+		// randomValue is between 0 included and sumDegrees excluded
 		randomValue := rm.nextInt64(sumDegrees - 1)
 		var sum int64
 		for nodeIndex, degree := range degrees {
@@ -153,7 +154,7 @@ func (rm RandomGenerator[N, L]) UndirectedBarabasiAlbertGraph(
 		result.AddLink(newLink)
 
 		// ensure invariants
-		sumDegrees += 1
+		sumDegrees += 2
 		degrees[newNodeIndex] = 1
 		degrees[destIndex] = degrees[destIndex] + 1
 	}
