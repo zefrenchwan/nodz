@@ -73,6 +73,7 @@ func (sm *MapMatrix[V]) GetValue(i, j int) (V, bool, error) {
 	return result, true, nil
 }
 
+// Line returns line i as an iterator
 func (sm *MapMatrix[V]) Line(i int) (graphs.GeneralIterator[V], error) {
 	if sm == nil {
 		return nil, nil
@@ -88,6 +89,7 @@ func (sm *MapMatrix[V]) Line(i int) (graphs.GeneralIterator[V], error) {
 	return &it, errIt
 }
 
+// Column returns column j as an iterator
 func (sm *MapMatrix[V]) Column(j int) (graphs.GeneralIterator[V], error) {
 	if sm == nil {
 		return nil, nil

@@ -419,3 +419,36 @@ func TestMatrix(t *testing.T) {
 		t.Errorf("expected 3 as sum, got %d", sum)
 	}
 }
+
+func TestCompleteGraphGeneration(t *testing.T) {
+	result, errResult := local.GenerateCompleteUndirectedGraph[internal.IdNode, internal.UndirectedSimpleLink[internal.IdNode]](10, internal.NewRandomIdNode, internal.NewUndirectedSimpleLink)
+	if errResult != nil {
+		t.Fail()
+	}
+
+	it, errIt := result.AllNodes()
+	if errIt != nil {
+		t.Fail()
+	}
+
+	counter := 0
+	for has, errHas := it.Next(); has; has, errHas = it.Next() {
+		if errHas != nil {
+			t.Fail()
+		}
+
+		counter++
+
+		if v, errV := it.Value(); errV != nil {
+			t.Fail()
+		} else if n, errN := result.Neighbors(v); errN != nil {
+			t.Fail()
+		} else if n.UndirectedDegree() != 9 {
+			t.Fail()
+		}
+	}
+
+	if counter != 10 {
+		t.Fail()
+	}
+}

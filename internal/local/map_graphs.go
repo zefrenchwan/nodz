@@ -1,6 +1,7 @@
 package local
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/zefrenchwan/nodz.git/graphs"
@@ -143,6 +144,50 @@ func ToMatrix[N graphs.Node, L graphs.Link[N], S any](am *MapGraph[N, L], linksM
 
 	arrayOfNodes := am.nodes.toIncreasingValues()
 	return arrayOfNodes, &result
+}
+
+// GenerateCompleteUndirectedGraph returns a complete undirected graph with nodesSize nodes
+func GenerateCompleteUndirectedGraph[N graphs.Node, L graphs.Link[N]](
+	nodesSize int, // number of nodes in the result
+	nodeGenerator graphs.RandomNodeGenerator[N], // generates a new random node at each call
+	linkGenerator graphs.RandomLinkGenerator[N, L], // generates a new random undirected link at each call
+) (
+	MapGraph[N, L], // result
+	error, // error, for instance if nodesSize makes no sense or whether linkGenerator makes directed links
+) {
+	var result MapGraph[N, L]
+
+	if nodesSize < 0 {
+		return result, errors.New("invalid size")
+	} else if nodesSize == 0 {
+		return result, nil
+	}
+
+	result = NewMapGraph[N, L]()
+	// generate nodes
+	nodes := make([]N, nodesSize)
+	for index := 0; index < nodesSize; index++ {
+		newNode := nodeGenerator()
+		result.AddNode(newNode)
+		nodes[index] = newNode
+	}
+
+	for i, source := range nodes {
+		for j, dest := range nodes {
+			if i == j {
+				continue
+			}
+
+			link := linkGenerator(source, dest)
+			if link.IsDirected() {
+				return result, errors.New("undirected links only")
+			}
+
+			result.AddLink(link)
+		}
+	}
+
+	return result, nil
 }
 
 // setLink adds a link at a given index
