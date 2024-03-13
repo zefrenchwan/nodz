@@ -9,10 +9,10 @@ So far:
 * implementing graphs core definitions (central graph, nodes, links, etc)
 * random graphs with preferential attachment (Barabasi Albert) and GNP (fixed nodes size, links by probability)
 * basic stats: degree distribution, size, etc
+* gephi export for data type. Just enough to create data visualizations of graphs, **this is not a gexf library with all gexf features**
 
 ### Next features (working on it)
 
-* gexf PARTIAL import and export. Just enough to create data visualizations of graphs, **this is not a gexf library with all gexf features**
 * walkthroughs
 
 ### Features to implement one day
@@ -20,6 +20,7 @@ So far:
 * graph features: connected component, graph diameter, etc
 * neo4j import and export
 * observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
+* gexf import and export (again, not planning a full support for gexf)
 
 And, still digging, but a must-have:
 * graph data visualization 
@@ -54,10 +55,11 @@ So far:
 
 ### Wait, what ? How do I start with your project ? 
 
-1. Start with [general definition of a graph](https://github.com/zefrenchwan/nodz/blob/main/graphs/structures.go) 
-2. Read `graphs/` interfaces if you need more details about `nodes`, `neighbors` or `links`. There should be no surprise, it is basic definition 
-3. Have a look at `internal_test/local_test` and start with value based graphs. Go on with central graphs tests
-4. Dig into implementation details if you like
+1. Open the `examples/` code and read code to get the purpose of some important classes
+2. Start with [general definition of a graph](https://github.com/zefrenchwan/nodz/blob/main/graphs/structures.go) 
+3. Read `graphs/` interfaces if you need more details about `nodes`, `neighbors` or `links`. There should be no surprise, it is basic definition 
+4. Have a look at `internal_test/local_test` and start with value based graphs. Go on with central graphs tests
+5. Dig into implementation details if you like
 
 ## You like graphs or network science ? 
 

@@ -14,11 +14,12 @@ import (
 )
 
 // GexfNodeExporter exports a node to a label and a map of properties.
-// Both label and properties are optional, just return default values
-type GexfNodeExporter[N graphs.Node] func(N) (string, map[string]string)
+// Both label and properties are optional, just return "", nil if you don't need them.
+// Note the indexInGraph parameter, it allows you to label the node with its index in the graph
+type GexfNodeExporter[N graphs.Node] func(node N, indexInGraph int) (string, map[string]string)
 
 // GexfBlankNodeExporter is a shortcut for returning default, value
-func GexfBlankNodeExporter(N graphs.Node) (string, map[string]string) {
+func GexfBlankNodeExporter[N graphs.Node](N, int) (string, map[string]string) {
 	return "", nil
 }
 
@@ -86,10 +87,13 @@ func ExportDataGraph[N graphs.Node, L graphs.Link[N]](
 			continue
 		}
 
+		// nodeIndex is the index of the node within the gexf file
+		nodeIndex := len(nodes)
+
 		// serialize the attributes of the node, and discover them for each node
 		attributesForNode := make(map[int]string)
 
-		label, properties := nodesExporter(node)
+		label, properties := nodesExporter(node, nodeIndex)
 		// fill attributes index map
 		for k, v := range properties {
 			if index, found := attributeIndexMap[k]; !found {
@@ -101,7 +105,7 @@ func ExportDataGraph[N graphs.Node, L graphs.Link[N]](
 			}
 		}
 
-		nodeValue := serializeGexfNode(len(nodes), label, attributesForNode)
+		nodeValue := serializeGexfNode(nodeIndex, label, attributesForNode)
 		nodeValues = append(nodeValues, nodeValue)
 		nodes = append(nodes, node)
 	}
