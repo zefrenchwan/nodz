@@ -12,11 +12,12 @@ So far:
 
 ### Next features (working on it)
 
+* gexf PARTIAL import and export. Just enough to create data visualizations of graphs, **this is not a gexf library with all gexf features**
 * walkthroughs
 
 ### Features to implement one day
 
-* gexf import and export
+* graph features: connected component, graph diameter, etc
 * neo4j import and export
 * observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
 
