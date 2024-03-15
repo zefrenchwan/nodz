@@ -57,6 +57,4 @@ type CentralStructureGraph[N Node, L Link[N]] interface {
 	RemoveNode(N) error
 	// AllNodes returns an iterator over all the nodes. Each node appearts exactly once
 	AllNodes() (NodesIterator[N], error)
-	// Neighbors returns the neighborhood of a node
-	Neighbors(N) (Neighborhood[N, L], error)
 }
