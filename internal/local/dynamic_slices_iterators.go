@@ -132,3 +132,16 @@ func (it *DynamicSlicesIterator[T]) AddLast(newIterator graphs.GeneralIterator[T
 	it.nextIterators = append(it.nextIterators, newIterator)
 	return nil
 }
+
+// Halt stops any iteration
+func (it *DynamicSlicesIterator[T]) Halt() error {
+	if it == nil {
+		return nil
+	}
+
+	var empty graphs.EmptyIterator[T]
+	it.currentIterator = empty
+	it.nextIterators = nil
+
+	return nil
+}

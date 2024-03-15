@@ -26,3 +26,23 @@ func TestDynamicSlicesIterators(t *testing.T) {
 		t.Error("it failure for test")
 	}
 }
+
+func TestDynamicSlicesIteratorsHalt(t *testing.T) {
+	elements := local.NewSlicesIterator([]int{1, 2, 3})
+
+	it := local.NewDynamicSlicesIterator(&elements)
+
+	if has, err := it.Next(); err != nil || !has {
+		t.Fail()
+	} else if v, errV := it.Value(); v != 1 || errV != nil {
+		t.Fail()
+	}
+
+	if err := it.Halt(); err != nil {
+		t.Fail()
+	}
+
+	if has, err := it.Next(); err != nil || has {
+		t.Fail()
+	}
+}

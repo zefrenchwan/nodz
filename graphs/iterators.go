@@ -1,5 +1,7 @@
 package graphs
 
+import "errors"
+
 // GeneralIterator is an abstract definition of an iterator.
 // Once created, an iterator is set before the first element, if any.
 // It means that value should not respond if called before the Next function.
@@ -30,8 +32,20 @@ type DynamicIterator[T any] interface {
 	AddNext(GeneralIterator[T]) error
 	// AddLast adds the parameter as the last iterator to process so far
 	AddLast(GeneralIterator[T]) error
+	// Halt immediatly stops the iterator : no more value, no more next
+	Halt() error
 }
 
-// DynamicIteratorBuilder is a way to build the initial iterator starting from a node.
-// Options may be: local (for instance DynamicSlicesIterator), or using a storage
-type DynamicIteratorBuilder[N Node, L Link[N]] func(startingNode N) (DynamicIterator[L], error)
+// EmptyIterator is a commodity for an empty iterator of any type
+type EmptyIterator[T any] struct{}
+
+// Next returns false, and that is it (no move on empty iterator)
+func (ei EmptyIterator[T]) Next() (bool, error) {
+	return false, nil
+}
+
+// Value returns an error because an empty iterator has no content (by definition)
+func (ei EmptyIterator[T]) Value() (T, error) {
+	var defaultValue T
+	return defaultValue, errors.New("no value for empty iterator")
+}
