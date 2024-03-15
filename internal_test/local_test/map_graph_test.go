@@ -10,6 +10,62 @@ import (
 	"github.com/zefrenchwan/nodz.git/internal_test"
 )
 
+func TestNeighbors(t *testing.T) {
+	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
+
+	source := internal.NewPropertiesNode()
+	dest1 := internal.NewPropertiesNode()
+	dest2 := internal.NewPropertiesNode()
+	dest3 := internal.NewPropertiesNode()
+	notInGraph := internal.NewPropertiesNode()
+
+	linkSourceDest1 := internal.NewDirectedValuedLink(&source, &dest1, 10)
+	linkSourceDest2 := internal.NewDirectedValuedLink(&source, &dest2, 20)
+	linkDest1Dest3 := internal.NewDirectedValuedLink(&dest1, &dest3, 30)
+
+	graph.AddLink(linkSourceDest1)
+	graph.AddLink(linkSourceDest2)
+	graph.AddLink(linkDest1Dest3)
+
+	var errG error
+	var neighbors graphs.Neighborhood[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]
+	//neighborhood of something not in the graph should return nothing
+	neighbors, errG = graph.Neighbors(&notInGraph)
+	if errG != nil {
+		t.Error("getting neighbors of a non existing node should not return an error")
+	} else if neighbors != nil {
+		t.Error("expecting nil for no neighboors")
+	}
+
+	// neighborhood of source shoud be source -> dest1 and source->dest2
+	neighbors, errG = graph.Neighbors(&source)
+	if errG != nil {
+		t.Error("getting neighbors should not return an error")
+	} else if neighbors == nil {
+		t.Error("expecting non nil for neighboors")
+	} else if neighbors.OutgoingDegree() != 2 {
+		t.Error("expecting two outgoing nodes")
+	} else if neighbors.IncomingDegree() != 0 {
+		t.Error("no incoming link expected")
+	} else if !neighbors.CenterNode().SameNode(&source) {
+		t.Error("cannot get center of neighborhood")
+	}
+
+	// dest1 has one incoming node and one outgoing node
+	neighbors, errG = graph.Neighbors(&dest1)
+	if errG != nil {
+		t.Error("getting neighbors should not return an error")
+	} else if neighbors == nil {
+		t.Error("expecting non nil for neighboors")
+	} else if neighbors.OutgoingDegree() != 1 {
+		t.Error("expecting two outgoing nodes")
+	} else if neighbors.IncomingDegree() != 1 {
+		t.Error("no incoming link expected")
+	} else if !neighbors.CenterNode().SameNode(&dest1) {
+		t.Error("cannot get center of neighborhood")
+	}
+}
+
 func TestAdjacencyMatrixNodes(t *testing.T) {
 	graph := local.NewMapGraph[*internal.PropertiesNode, internal.ValuedLink[*internal.PropertiesNode, int]]()
 

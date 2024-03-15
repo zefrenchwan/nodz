@@ -31,3 +31,7 @@ type DynamicIterator[T any] interface {
 	// AddLast adds the parameter as the last iterator to process so far
 	AddLast(GeneralIterator[T]) error
 }
+
+// DynamicIteratorBuilder is a way to build the initial iterator starting from a node.
+// Options may be: local (for instance DynamicSlicesIterator), or using a storage
+type DynamicIteratorBuilder[N Node, L Link[N]] func(startingNode N) (DynamicIterator[L], error)

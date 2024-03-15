@@ -107,7 +107,7 @@ func (am *MapGraph[N, L]) Neighbors(node N) (graphs.Neighborhood[N, L], error) {
 
 	mapValue := am.content[index]
 
-	return mapValue.toNeighborhood(), nil
+	return mapValue.toNeighborhood(node), nil
 }
 
 // ToMatrix maps a graph as a matrix of nodes with values.
@@ -324,7 +324,7 @@ func (a *mapLine[N, L]) removeLink(destinationIndex int, link L) bool {
 }
 
 // toNeighborhood constructs a new neighborhood for a given source
-func (a *mapLine[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
+func (a *mapLine[N, L]) toNeighborhood(center N) graphs.Neighborhood[N, L] {
 	result := internal.NeighborsIterator[N, L]{}
 	if a == nil {
 		return result
@@ -333,6 +333,7 @@ func (a *mapLine[N, L]) toNeighborhood() graphs.Neighborhood[N, L] {
 	result.IncomingCounter = a.incomingCounter
 	result.OutgoingCounter = a.outgoingCounter
 	result.UndirectedCounter = a.undirectedCounter
+	result.CurrentNode = center
 	// make the union of all links. Because destinations are disjoin, links are always different
 	result.IteratorsFactory = func() graphs.LinksIterator[N, L] {
 		allLinks := make([]L, 0)

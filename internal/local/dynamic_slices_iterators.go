@@ -64,10 +64,6 @@ func (it *DynamicSlicesIterator[T]) Next() (bool, error) {
 	case -1:
 		// no matching iterator
 		return false, globalErr
-	case 0:
-		// first element, just leave it out
-		it.currentIterator = it.nextIterators[firstValidIteratorIndex]
-		it.nextIterators = it.nextIterators[1:]
 	case len(it.nextIterators) - 1:
 		// last one matches, clean nextIterators
 		it.currentIterator = it.nextIterators[firstValidIteratorIndex]

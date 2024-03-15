@@ -27,6 +27,14 @@ type ValueBasedGraph[NV comparable, LV comparable] interface {
 	LinkValue(source, destination NV) (LV, bool, error)
 }
 
+// StructuredGraph just says: this graph knows about its neighbors given a node.
+// This is the common denominator with central structure graphs (basically, graph deals with nodes and links)
+// and peers graphs (basically, nodes deal with graph structure without a "all mighty" common structure).
+type StructuredGraph[N Node, L Link[N]] interface {
+	// Neighbors returns the neighborhood of a node
+	Neighbors(N) (Neighborhood[N, L], error)
+}
+
 // CentralStructureGraph is a graph that allows global operations, such as nodes or links iterations.
 // Its definition should allow many implementations, from a "in memory" implementation to a distributed one.
 // It also should deal with many types of links ((un)directed, valued, etc) and nodes (with data in it, or just id based nodes)
@@ -37,6 +45,8 @@ type ValueBasedGraph[NV comparable, LV comparable] interface {
 // This structure is less intuitive (depending on your intuition...) than a value based graph, but it offers way more options.
 // Because it allows a distributed storage version, all functions may return an error.
 type CentralStructureGraph[N Node, L Link[N]] interface {
+	// a central structure graph is a structured graph
+	StructuredGraph[N, L]
 	// AddLink adds a node in the graph, upserts its value if any, does nothing for same content
 	AddLink(L) error
 	// RemoveLink removes a link but keeps the nodes

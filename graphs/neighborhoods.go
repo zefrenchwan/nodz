@@ -17,4 +17,6 @@ type Neighborhood[N Node, L Link[N]] interface {
 	OutgoingDegree() int64
 	// UndirectedDegree returns the degree of the node for undirected links
 	UndirectedDegree() int64
+	// CenterNode returns the node we get neighborhood for
+	CenterNode() N
 }
