@@ -16,11 +16,43 @@ type GeneralIterator[T any] interface {
 	Value() (T, error)
 }
 
+// MapIterator composes an iterator to return the same number of elements, just each one is mapped.
+type MapIterator[T any, S any] struct {
+	// Iterator is the base iterator to map values for
+	Iterator GeneralIterator[T]
+	// Mapper is the function to pass from an instance of T to an instance of S
+	Mapper func(T) S
+}
+
+// Next has the same behavior as mi.Iterator
+func (mi *MapIterator[T, S]) Next() (bool, error) {
+	if mi == nil {
+		return false, errors.New("nil iterator")
+	} else if mi.Iterator == nil {
+		return false, nil
+	}
+
+	return mi.Iterator.Next()
+}
+
+// Value reads value from mi.Iterator and returns mapped value
+func (mi *MapIterator[T, S]) Value() (S, error) {
+	var empty S
+
+	if mi == nil || mi.Iterator == nil || mi.Mapper == nil {
+		return empty, errors.New("nil iterator")
+	}
+
+	if value, err := mi.Iterator.Value(); err != nil {
+		return empty, err
+	} else {
+		return mi.Mapper(value), nil
+	}
+}
+
 // CompositeIterator is a composition of iterators.
-// Typical use would be a graph walkthrough: neighborhoods are added as we run into a graph.
-// But, in general, we may add iterators on the fly:
-// * as the next iterator to run (depth first walkthrough)
-// * as the last iterator (breadth first walkthrough)
+// Once an iterator is complete, then move to the next one.
+// Definition of "the next one" may vary over time
 type CompositeIterator[T any] interface {
 	// A composite iterator is an iterator too
 	GeneralIterator[T]
@@ -33,6 +65,19 @@ type CompositeIterator[T any] interface {
 	// AddLast adds the parameter as the last iterator to process so far
 	AddLast(GeneralIterator[T]) error
 	// Halt immediatly stops the iterator : no more value, no more next
+	Halt() error
+}
+
+// DynamicIterator is an iterator that allows to change values on the fly.
+// Typical local implementation would be a double entries list (from head or tail)
+type DynamicIterator[T any] interface {
+	// A dynamic iterator is an iterator too
+	GeneralIterator[T]
+	// AddNextValue adds the parameter as the next value to read
+	AddNextValue(T) error
+	// AddLastValue adds the parameter as the last value to read
+	AddLastValue(T) error
+	// Halt stops iteration as soon as called
 	Halt() error
 }
 
