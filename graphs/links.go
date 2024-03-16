@@ -25,3 +25,23 @@ type Link[N Node] interface {
 // LinksIterator defines iterator over links.
 // In some circumstances, some graphs are too huge to just return a []Link.
 type LinksIterator[N Node, L Link[N]] GeneralIterator[L]
+
+// FollowLink returns the destination of a link from a source, if possible.
+// Formally, if link is directed link, it is possible to go from source to destination.
+// If link is undiregcted, it is possible to go from an endpoint to another.
+// If parameter is neither source nor destination, no move is possible
+func FollowLink[N Node, L Link[N]](from N, link L) (bool, N) {
+	var empty N
+
+	if link.Source().SameNode(from) {
+		return true, link.Destination()
+	} else if link.Destination().SameNode(from) {
+		if link.IsDirected() {
+			return false, empty
+		} else {
+			return true, link.Source()
+		}
+	}
+
+	return false, empty
+}

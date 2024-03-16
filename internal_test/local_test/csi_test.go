@@ -7,14 +7,14 @@ import (
 	"github.com/zefrenchwan/nodz.git/internal_test"
 )
 
-func TestDynamicSlicesIterators(t *testing.T) {
+func TestCompositeSlicesIterators(t *testing.T) {
 	firstElements := local.NewSlicesIterator([]int{1, 2, 3})
 	secondElements := local.NewSlicesIterator([]int{4, 5, 6})
 	replacedIterator := local.NewSlicesIterator([]int{7})
 	emptyElements := local.NewSlicesIterator([]int{})
 	thirdElements := local.NewSlicesIterator([]int{8, 9})
 
-	it := local.NewDynamicSlicesIterator(&replacedIterator)
+	it := local.NewCompositeSlicesIterator(&replacedIterator)
 	it.ForceCurrent(&secondElements)
 	it.PostponeCurrent(&firstElements)
 	it.AddNext(&emptyElements)
@@ -27,10 +27,10 @@ func TestDynamicSlicesIterators(t *testing.T) {
 	}
 }
 
-func TestDynamicSlicesIteratorsHalt(t *testing.T) {
+func TestCompositeSlicesIteratorsHalt(t *testing.T) {
 	elements := local.NewSlicesIterator([]int{1, 2, 3})
 
-	it := local.NewDynamicSlicesIterator(&elements)
+	it := local.NewCompositeSlicesIterator(&elements)
 
 	if has, err := it.Next(); err != nil || !has {
 		t.Fail()

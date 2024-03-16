@@ -16,13 +16,13 @@ type GeneralIterator[T any] interface {
 	Value() (T, error)
 }
 
-// DynamicIterator is a composition of iterators.
+// CompositeIterator is a composition of iterators.
 // Typical use would be a graph walkthrough: neighborhoods are added as we run into a graph.
 // But, in general, we may add iterators on the fly:
 // * as the next iterator to run (depth first walkthrough)
 // * as the last iterator (breadth first walkthrough)
-type DynamicIterator[T any] interface {
-	// A dynamic iterator is an iterator too
+type CompositeIterator[T any] interface {
+	// A composite iterator is an iterator too
 	GeneralIterator[T]
 	// ForceCurrent replaces current iterator with the parameter (then, current iterator is lost)
 	ForceCurrent(GeneralIterator[T]) error

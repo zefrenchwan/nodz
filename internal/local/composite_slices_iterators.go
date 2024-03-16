@@ -6,24 +6,24 @@ import (
 	"github.com/zefrenchwan/nodz.git/graphs"
 )
 
-// DynamicSlicesIterator is the local implementation of a dynamic iterator.
+// CompositeSlicesIterator is the local implementation of a composite iterator.
 // Basically, it looks like a list of iterators to take in order
-type DynamicSlicesIterator[T any] struct {
+type CompositeSlicesIterator[T any] struct {
 	// currentIterator is the source iterator to get data from
 	currentIterator graphs.GeneralIterator[T]
 	// nextIterators are the iterators to read once currentIterator is over
 	nextIterators []graphs.GeneralIterator[T]
 }
 
-// NewDynamicSlicesIterator returns an iterator over parameter it, with the ability to add iterators after
-func NewDynamicSlicesIterator[T any](it graphs.GeneralIterator[T]) DynamicSlicesIterator[T] {
+// NewCompositeSlicesIterator returns an iterator over parameter it, with the ability to add iterators after
+func NewCompositeSlicesIterator[T any](it graphs.GeneralIterator[T]) CompositeSlicesIterator[T] {
 	first := it
 	if it == nil {
 		empty := NewSlicesIterator([]T{})
 		first = &empty
 	}
 
-	var result DynamicSlicesIterator[T]
+	var result CompositeSlicesIterator[T]
 	result.currentIterator = first
 	result.nextIterators = make([]graphs.GeneralIterator[T], 0)
 	return result
@@ -31,7 +31,7 @@ func NewDynamicSlicesIterator[T any](it graphs.GeneralIterator[T]) DynamicSlices
 
 // Next moves to the next element, if any.
 // This method implements iterator
-func (it *DynamicSlicesIterator[T]) Next() (bool, error) {
+func (it *CompositeSlicesIterator[T]) Next() (bool, error) {
 	if it == nil || it.currentIterator == nil {
 		return false, nil
 	}
@@ -79,7 +79,7 @@ func (it *DynamicSlicesIterator[T]) Next() (bool, error) {
 
 // Value returns the current value, if any.
 // This method implements iterator
-func (it *DynamicSlicesIterator[T]) Value() (T, error) {
+func (it *CompositeSlicesIterator[T]) Value() (T, error) {
 	var defaultValue T
 	if it == nil || it.currentIterator == nil {
 		return defaultValue, errors.New("empty iterator, no value")
@@ -89,7 +89,7 @@ func (it *DynamicSlicesIterator[T]) Value() (T, error) {
 }
 
 // ForceCurrent forces newIterator as the current iterator
-func (it *DynamicSlicesIterator[T]) ForceCurrent(newIterator graphs.GeneralIterator[T]) error {
+func (it *CompositeSlicesIterator[T]) ForceCurrent(newIterator graphs.GeneralIterator[T]) error {
 	if it == nil || newIterator == nil {
 		return errors.New("empty iterator")
 	}
@@ -99,7 +99,7 @@ func (it *DynamicSlicesIterator[T]) ForceCurrent(newIterator graphs.GeneralItera
 }
 
 // PostponeCurrent passes current iterator as the next one, and runs newIterator first.
-func (it *DynamicSlicesIterator[T]) PostponeCurrent(newIterator graphs.GeneralIterator[T]) error {
+func (it *CompositeSlicesIterator[T]) PostponeCurrent(newIterator graphs.GeneralIterator[T]) error {
 	if it == nil || newIterator == nil {
 		return errors.New("empty iterator")
 	}
@@ -112,7 +112,7 @@ func (it *DynamicSlicesIterator[T]) PostponeCurrent(newIterator graphs.GeneralIt
 }
 
 // AddNext adds newIterator as the next one to run
-func (it *DynamicSlicesIterator[T]) AddNext(newIterator graphs.GeneralIterator[T]) error {
+func (it *CompositeSlicesIterator[T]) AddNext(newIterator graphs.GeneralIterator[T]) error {
 	if it == nil || newIterator == nil {
 		return errors.New("empty iterator")
 	}
@@ -124,7 +124,7 @@ func (it *DynamicSlicesIterator[T]) AddNext(newIterator graphs.GeneralIterator[T
 }
 
 // AddLast adds newIterator as the last iterator to run
-func (it *DynamicSlicesIterator[T]) AddLast(newIterator graphs.GeneralIterator[T]) error {
+func (it *CompositeSlicesIterator[T]) AddLast(newIterator graphs.GeneralIterator[T]) error {
 	if it == nil || newIterator == nil {
 		return errors.New("empty iterator")
 	}
@@ -134,7 +134,7 @@ func (it *DynamicSlicesIterator[T]) AddLast(newIterator graphs.GeneralIterator[T
 }
 
 // Halt stops any iteration
-func (it *DynamicSlicesIterator[T]) Halt() error {
+func (it *CompositeSlicesIterator[T]) Halt() error {
 	if it == nil {
 		return nil
 	}
