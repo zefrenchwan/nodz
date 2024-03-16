@@ -20,3 +20,12 @@ type Neighborhood[N Node, L Link[N]] interface {
 	// CenterNode returns the node we get neighborhood for
 	CenterNode() N
 }
+
+// IsIsolatedNeighborhood returns true for a node with no link, false otherwise.
+// It returns true also for a default neighborhood
+func IsIsolatedNeighborhood[N Node, L Link[N]](n Neighborhood[N, L]) bool {
+	return n.IncomingDegree() == 0 && n.OutgoingDegree() == 0 && n.UndirectedDegree() == 0
+}
+
+// NeighborhoodIterator is just an iterator over all the neighboors of a node
+type NeighborhoodIterator[N Node, L Link[N]] GeneralIterator[Neighborhood[N, L]]

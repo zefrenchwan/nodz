@@ -1,5 +1,9 @@
 package graphs
 
+import (
+	"errors"
+)
+
 // ValueBasedGraph is the general definition of a graph that is sort of "ready for use":
 // definition does not provide nodes, links, neighborhoods.
 // For instance, you may use to link cities (by name, NV = string) with distances (LV=float32).
@@ -31,8 +35,48 @@ type ValueBasedGraph[NV comparable, LV comparable] interface {
 // This is the common denominator with central structure graphs (basically, graph deals with nodes and links)
 // and peers graphs (basically, nodes deal with graph structure without a "all mighty" common structure).
 type StructuredGraph[N Node, L Link[N]] interface {
-	// Neighbors returns the neighborhood of a node
+	// Neighbors returns the neighborhood of a node.
+	// Formally, it returns nil if the node is NOT in the graph.
+	// It returns an isolated non empty neighborhood for an isolated node.
+	// It returns a full neighborhood for a linked node.
 	Neighbors(N) (Neighborhood[N, L], error)
+}
+
+// DestinationNeighbors returns all the neighbors of the origin within the graph.
+// First, if node is not in the graph, it returns nil, nil.
+// If the node is isolated, result is an empty iterator.
+// Otherwise, node is not isolated and all its neighbors, are, by definition, not isolated
+func DestinationNeighbors[N Node, L Link[N]](origin N, graph StructuredGraph[N, L]) (NeighborhoodIterator[N, L], error) {
+	if graph == nil {
+		return nil, errors.New("nil graph")
+	}
+
+	neighbors, errNeighbors := graph.Neighbors(origin)
+	if errNeighbors != nil {
+		return nil, errNeighbors
+	} else if neighbors == nil {
+		// node not in the graph
+		return nil, nil
+	}
+
+	links, errLinks := neighbors.Links()
+	if errLinks != nil {
+		return nil, errLinks
+	}
+
+	var result MapFilterIterator[L, Neighborhood[N, L]]
+	result.Iterator = links
+	result.Filter = func(n Neighborhood[N, L]) bool { return !IsIsolatedNeighborhood(n) }
+	result.Mapper = func(link L) (Neighborhood[N, L], error) {
+		_, destinationNode := FollowLink(origin, link)
+		if n, err := graph.Neighbors(destinationNode); err != nil {
+			return nil, err
+		} else {
+			return n, nil
+		}
+	}
+
+	return &result, nil
 }
 
 // CentralStructureGraph is a graph that allows global operations, such as nodes or links iterations.

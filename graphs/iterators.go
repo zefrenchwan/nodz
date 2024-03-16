@@ -16,27 +16,49 @@ type GeneralIterator[T any] interface {
 	Value() (T, error)
 }
 
-// MapIterator composes an iterator to return the same number of elements, just each one is mapped.
-type MapIterator[T any, S any] struct {
+// MapFilterIterator composes an iterator with a mapper and a filter.
+// Mapper is not optional, but filter is (nil means no filter).
+type MapFilterIterator[T any, S any] struct {
 	// Iterator is the base iterator to map values for
 	Iterator GeneralIterator[T]
 	// Mapper is the function to pass from an instance of T to an instance of S
-	Mapper func(T) S
+	Mapper func(T) (S, error)
+	// Filter to exclude some S values
+	Filter func(S) bool
 }
 
-// Next has the same behavior as mi.Iterator
-func (mi *MapIterator[T, S]) Next() (bool, error) {
+// Next finds the next matching, if any
+func (mi *MapFilterIterator[T, S]) Next() (bool, error) {
 	if mi == nil {
 		return false, errors.New("nil iterator")
 	} else if mi.Iterator == nil {
 		return false, nil
 	}
 
-	return mi.Iterator.Next()
+	var globalErr error
+
+	for {
+		if has, err := mi.Iterator.Next(); err != nil {
+			globalErr = errors.Join(globalErr, err)
+			continue
+		} else if !has {
+			return false, globalErr
+		} else if v, errV := mi.Iterator.Value(); errV != nil {
+			globalErr = errors.Join(globalErr, errV)
+			continue
+		} else if mi.Filter == nil {
+			return true, globalErr
+		} else if res, errRes := mi.Mapper(v); errRes != nil {
+			globalErr = errors.Join(globalErr, errRes)
+			continue
+		} else if mi.Filter(res) {
+			return true, globalErr
+		}
+	}
 }
 
 // Value reads value from mi.Iterator and returns mapped value
-func (mi *MapIterator[T, S]) Value() (S, error) {
+func (mi *MapFilterIterator[T, S]) Value() (S, error) {
 	var empty S
 
 	if mi == nil || mi.Iterator == nil || mi.Mapper == nil {
@@ -46,7 +68,7 @@ func (mi *MapIterator[T, S]) Value() (S, error) {
 	if value, err := mi.Iterator.Value(); err != nil {
 		return empty, err
 	} else {
-		return mi.Mapper(value), nil
+		return mi.Mapper(value)
 	}
 }
 

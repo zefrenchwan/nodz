@@ -18,11 +18,13 @@ func TestNeighbors(t *testing.T) {
 	dest2 := internal.NewPropertiesNode()
 	dest3 := internal.NewPropertiesNode()
 	notInGraph := internal.NewPropertiesNode()
+	isolated := internal.NewPropertiesNode()
 
 	linkSourceDest1 := internal.NewDirectedValuedLink(&source, &dest1, 10)
 	linkSourceDest2 := internal.NewDirectedValuedLink(&source, &dest2, 20)
 	linkDest1Dest3 := internal.NewDirectedValuedLink(&dest1, &dest3, 30)
 
+	graph.AddNode(&isolated)
 	graph.AddLink(linkSourceDest1)
 	graph.AddLink(linkSourceDest2)
 	graph.AddLink(linkDest1Dest3)
@@ -49,6 +51,8 @@ func TestNeighbors(t *testing.T) {
 		t.Error("no incoming link expected")
 	} else if !neighbors.CenterNode().SameNode(&source) {
 		t.Error("cannot get center of neighborhood")
+	} else if graphs.IsIsolatedNeighborhood(neighbors) {
+		t.Error("node is not isolated")
 	}
 
 	// dest1 has one incoming node and one outgoing node
@@ -63,6 +67,18 @@ func TestNeighbors(t *testing.T) {
 		t.Error("no incoming link expected")
 	} else if !neighbors.CenterNode().SameNode(&dest1) {
 		t.Error("cannot get center of neighborhood")
+	} else if graphs.IsIsolatedNeighborhood(neighbors) {
+		t.Error("node is not isolated")
+	}
+
+	// isolated has no neighbor but is in the graph
+	neighbors, errG = graph.Neighbors(&isolated)
+	if errG != nil || neighbors == nil {
+		t.Error("if a node exists in a graph, its neighborhood should exist")
+	} else if !neighbors.CenterNode().SameNode(&isolated) {
+		t.Error("wrong center")
+	} else if !graphs.IsIsolatedNeighborhood(neighbors) {
+		t.Error("node is isolated")
 	}
 }
 
