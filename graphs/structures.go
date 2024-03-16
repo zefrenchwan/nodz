@@ -42,10 +42,16 @@ type StructuredGraph[N Node, L Link[N]] interface {
 	Neighbors(N) (Neighborhood[N, L], error)
 }
 
-// DestinationNeighbors returns all the neighbors of the origin within the graph.
-// First, if node is not in the graph, it returns nil, nil.
-// If the node is isolated, result is an empty iterator.
-// Otherwise, node is not isolated and all its neighbors, are, by definition, not isolated
+// DestinationNeighbors returns all the neighbors of the destinations of each link from origin.
+// Get a node, get its links, get destinations, and return the neighborhoods of those destination.
+// As an example, consider this graph:
+// a -- b -- c
+// Result of DestinationNeighbors(b, graph) is { neighborhood of a , neighborhood of b }
+//
+// Now, formally:
+// * if node is not in the graph, it returns nil, nil.
+// * if the node is isolated, result is an empty iterator, nil
+// * otherwise, node is not isolated and all its neighbors form a set that is the expected result
 func DestinationNeighbors[N Node, L Link[N]](origin N, graph StructuredGraph[N, L]) (NeighborhoodIterator[N, L], error) {
 	if graph == nil {
 		return nil, errors.New("nil graph")

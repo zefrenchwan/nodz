@@ -40,7 +40,8 @@ func TestDestinationNeighbors(t *testing.T) {
 		t.Fail()
 	}
 
-	// in graph, expects all its neighbors
+	// in graph, expects all its neighbors.
+	// Expected values are the neighborhood of source and dest3
 	// First part, calculate expected
 	expected := make([]graphs.Neighborhood[internal.IdNode, internal.UndirectedSimpleLink[internal.IdNode]], 0)
 	if n, err := graph.Neighbors(source); err != nil {
@@ -70,5 +71,4 @@ func TestDestinationNeighbors(t *testing.T) {
 	} else if !v {
 		t.Error("neighborhoods differ")
 	}
-
 }
