@@ -524,31 +524,3 @@ func TestCompleteGraphGeneration(t *testing.T) {
 		t.Fail()
 	}
 }
-
-func TestMapGraphConnectedComponents(t *testing.T) {
-	graph := local.NewMapGraph[internal.IdNode, internal.UndirectedSimpleLink[internal.IdNode]]()
-
-	// isolated node
-	graph.AddNode(internal.NewRandomIdNode())
-
-	c11 := internal.NewRandomIdNode()
-	c12 := internal.NewRandomIdNode()
-	c13 := internal.NewRandomIdNode()
-	c14 := internal.NewRandomIdNode()
-
-	c21 := internal.NewRandomIdNode()
-	c22 := internal.NewRandomIdNode()
-	c23 := internal.NewRandomIdNode()
-
-	graph.AddLink(internal.NewUndirectedSimpleLink(c11, c12))
-	graph.AddLink(internal.NewUndirectedSimpleLink(c12, c14))
-	graph.AddLink(internal.NewUndirectedSimpleLink(c14, c13))
-
-	graph.AddLink(internal.NewUndirectedSimpleLink(c21, c22))
-	graph.AddLink(internal.NewUndirectedSimpleLink(c22, c23))
-	graph.AddLink(internal.NewUndirectedSimpleLink(c23, c21))
-
-	if graph.CountConnectedComponents() != 3 {
-		t.Error("expected 3 connected components")
-	}
-}

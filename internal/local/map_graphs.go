@@ -146,53 +146,6 @@ func ToMatrix[N graphs.Node, L graphs.Link[N], S any](am *MapGraph[N, L], linksM
 	return arrayOfNodes, &result
 }
 
-// CountConnectedComponents just counts connected components, assuming that links are undirected.
-// Value is then assured for this case (and subject to doubt for directed links)
-func (am *MapGraph[N, L]) CountConnectedComponents() int64 {
-	// all isolated nodes make a connected component
-	connectedComponentsCounter := int64(am.nodes.size() - len(am.content))
-	// as long as there is an unmarked node, breadth first search
-	markedNodes := make(map[int]bool)
-	for k := range am.content {
-		markedNodes[k] = true
-	}
-
-	for size := len(markedNodes); size != 0; size = len(markedNodes) {
-		connectedComponentsCounter++
-		// find first element to start bfs with
-		var startingPoint int
-		for k := range markedNodes {
-			startingPoint = k
-			break
-		}
-
-		// fifo implemented with a slice
-		fifo := []int{startingPoint}
-		for {
-			if len(fifo) == 0 {
-				break
-			}
-
-			currentNode := fifo[0]
-			fifo = fifo[1:]
-
-			if !markedNodes[currentNode] {
-				continue
-			}
-
-			delete(markedNodes, currentNode)
-			for outgoing := range am.content[currentNode].values {
-				// not doing this would make a mess with cycles
-				if markedNodes[outgoing] {
-					fifo = append(fifo, outgoing)
-				}
-			}
-		}
-	}
-
-	return connectedComponentsCounter
-}
-
 // GenerateCompleteUndirectedGraph returns a complete undirected graph with nodesSize nodes
 func GenerateCompleteUndirectedGraph[N graphs.Node, L graphs.Link[N]](
 	nodesSize int, // number of nodes in the result

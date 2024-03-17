@@ -103,6 +103,9 @@ type DynamicIterator[T any] interface {
 	Halt() error
 }
 
+// DynamicIteratorBuilder returns a new empty DynamicIterator
+type DynamicIteratorBuilder[T any] func() (DynamicIterator[T], error)
+
 // EmptyIterator is a commodity for an empty iterator of any type
 type EmptyIterator[T any] struct{}
 

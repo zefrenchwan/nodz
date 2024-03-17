@@ -108,3 +108,141 @@ type CentralStructureGraph[N Node, L Link[N]] interface {
 	// AllNodes returns an iterator over all the nodes. Each node appearts exactly once
 	AllNodes() (NodesIterator[N], error)
 }
+
+// CountConnectedComponents applies to undirected graphs and returns the number of connected components of the graph.
+// General algorithm is simple:
+// Create a counter set to 0
+// Mark all nodes in the graph as not seen
+// Peek a node
+// Find its connected component, and unmark each node of the same connected component
+// If there is a left node, do the same with it
+// Otherwise, return the counter of connected components
+//
+// To find the connected components of a node, we use a breadth first search.
+// Algorithm is:
+// create a fifo
+// add first node (the one we start connected component with)
+// while there is a node in the fifo
+// pick it, and add all its neighbors in the fifo
+func CountConnectedComponents[N Node, L Link[N]](
+	graph CentralStructureGraph[N, L], // graph to find connected components within
+	setBuilder AbstractSetBuilder[N], // to make a set implementation able to deal with the graph
+	dynamicBuilder DynamicIteratorBuilder[N], // to make a dynamic builder able to deal with the graph
+) (int64, // number of connected components in the graph
+	error, // for any error
+) {
+	itNodes, errItNodes := graph.AllNodes()
+	if errItNodes != nil {
+		return -1, errItNodes
+	}
+
+	markedNodes, errSet := setBuilder(func(a, b N) bool { return a.SameNode(b) })
+	if errSet != nil {
+		return -1, errSet
+	}
+
+	var globalErr error
+	for has, errHas := itNodes.Next(); has; has, errHas = itNodes.Next() {
+		if errHas != nil {
+			globalErr = errors.Join(globalErr, errHas)
+			continue
+		}
+
+		if v, errV := itNodes.Value(); errV != nil {
+			globalErr = errors.Join(globalErr, errV)
+			continue
+		} else if err := markedNodes.Add(v); err != nil {
+			globalErr = errors.Join(globalErr, err)
+			continue
+		}
+	}
+
+	if globalErr != nil {
+		return -1, globalErr
+	}
+
+	// counter of connected components
+	var result int64
+	for {
+		if empty, err := markedNodes.IsEmpty(); err != nil {
+			globalErr = errors.Join(globalErr, err)
+			break
+		} else if empty {
+			break
+		}
+
+		nextOne, errPop := markedNodes.Peek()
+		if errPop != nil {
+			globalErr = errors.Join(globalErr, errPop)
+			continue
+		}
+
+		fifo, errFifo := dynamicBuilder()
+		if errFifo != nil {
+			globalErr = errors.Join(globalErr, errPop)
+			break
+		}
+
+		if err := fifo.AddNextValue(nextOne); err != nil {
+			globalErr = errors.Join(globalErr, err)
+			continue
+		}
+
+		// find its connected component using a breadth first search
+		for {
+			// node to find connected component for
+			var currentNode N
+			// go until fifo is empty
+			if next, errNext := fifo.Next(); errNext != nil || !next {
+				globalErr = errors.Join(globalErr, errNext)
+				break
+			} else if v, errV := fifo.Value(); errV != nil {
+				globalErr = errors.Join(globalErr, errNext)
+				continue
+			} else if has, errHas := markedNodes.Has(v); errHas != nil || !has {
+				globalErr = errors.Join(globalErr, errHas)
+				continue
+			} else {
+				currentNode = v
+			}
+
+			// unmark the node
+			if err := markedNodes.Remove(currentNode); err != nil {
+				globalErr = errors.Join(globalErr, err)
+				break
+			}
+
+			// unmark recursively each node of the connected component
+			var neighbors NeighborhoodIterator[N, L]
+			if n, errN := DestinationNeighbors(currentNode, graph); errN != nil {
+				globalErr = errors.Join(globalErr, errN)
+				continue
+			} else {
+				neighbors = n
+			}
+
+			// basically add all neighbors in the fifo
+			for has, errHas := neighbors.Next(); has; has, errHas = neighbors.Next() {
+				if errHas != nil {
+					globalErr = errors.Join(globalErr, errHas)
+					continue
+				} else if v, errV := neighbors.Value(); errV != nil {
+					globalErr = errors.Join(globalErr, errHas)
+					continue
+				} else if errAdd := fifo.AddLastValue(v.CenterNode()); errAdd != nil {
+					globalErr = errors.Join(globalErr, errAdd)
+					continue
+				}
+			}
+		}
+
+		if globalErr != nil {
+			return -1, globalErr
+		}
+
+		// else, we went through a full connected component, move to the next one
+		result++
+	}
+
+	return result, globalErr
+}
