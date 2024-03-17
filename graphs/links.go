@@ -45,3 +45,20 @@ func FollowLink[N Node, L Link[N]](from N, link L) (bool, N) {
 
 	return false, empty
 }
+
+// FindLinkOppositeSide returns the other side of a link, no matter the direction.
+// It is possible to call it with node being neither a source, nor a destination.
+// In this case, result is empty, false.
+// But if node is in the link, then result is the other node and true.
+// Note that FollowLink takes care about the direction of the link, but this function does not.
+func FindLinkOppositeSide[N Node, L Link[N]](node N, link Link[N]) (bool, N) {
+	var empty N
+	switch {
+	case link.Source().SameNode(node):
+		return true, link.Destination()
+	case link.Destination().SameNode(node):
+		return true, link.Source()
+	default:
+		return false, empty
+	}
+}
