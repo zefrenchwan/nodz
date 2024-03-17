@@ -42,49 +42,6 @@ type StructuredGraph[N Node, L Link[N]] interface {
 	Neighbors(N) (Neighborhood[N, L], error)
 }
 
-// DestinationNeighbors returns all the neighbors of the destinations of each link from origin.
-// Get a node, get its links, get destinations, and return the neighborhoods of those destination.
-// As an example, consider this graph:
-// a -- b -- c
-// Result of DestinationNeighbors(b, graph) is { neighborhood of a , neighborhood of b }
-//
-// Now, formally:
-// * if node is not in the graph, it returns nil, nil.
-// * if the node is isolated, result is an empty iterator, nil
-// * otherwise, node is not isolated and all its neighbors form a set that is the expected result
-func DestinationNeighbors[N Node, L Link[N]](origin N, graph StructuredGraph[N, L]) (NeighborhoodIterator[N, L], error) {
-	if graph == nil {
-		return nil, errors.New("nil graph")
-	}
-
-	neighbors, errNeighbors := graph.Neighbors(origin)
-	if errNeighbors != nil {
-		return nil, errNeighbors
-	} else if neighbors == nil {
-		// node not in the graph
-		return nil, nil
-	}
-
-	links, errLinks := neighbors.Links()
-	if errLinks != nil {
-		return nil, errLinks
-	}
-
-	var result MapFilterIterator[L, Neighborhood[N, L]]
-	result.Iterator = links
-	result.Filter = func(n Neighborhood[N, L]) bool { return !IsIsolatedNeighborhood(n) }
-	result.Mapper = func(link L) (Neighborhood[N, L], error) {
-		_, destinationNode := FollowLink(origin, link)
-		if n, err := graph.Neighbors(destinationNode); err != nil {
-			return nil, err
-		} else {
-			return n, nil
-		}
-	}
-
-	return &result, nil
-}
-
 // CentralStructureGraph is a graph that allows global operations, such as nodes or links iterations.
 // Its definition should allow many implementations, from a "in memory" implementation to a distributed one.
 // It also should deal with many types of links ((un)directed, valued, etc) and nodes (with data in it, or just id based nodes)
@@ -212,7 +169,7 @@ func CountConnectedComponents[N Node, L Link[N]](
 				break
 			}
 
-			// unmark recursively each node of the connected component
+			// next step is to keep walking through the graph by adding neighbors to the fifo
 			var neighbors NeighborhoodIterator[N, L]
 			if n, errN := DestinationNeighbors(currentNode, graph); errN != nil {
 				globalErr = errors.Join(globalErr, errN)
@@ -221,7 +178,6 @@ func CountConnectedComponents[N Node, L Link[N]](
 				neighbors = n
 			}
 
-			// basically add all neighbors in the fifo
 			for has, errHas := neighbors.Next(); has; has, errHas = neighbors.Next() {
 				if errHas != nil {
 					globalErr = errors.Join(globalErr, errHas)
@@ -245,4 +201,47 @@ func CountConnectedComponents[N Node, L Link[N]](
 	}
 
 	return result, globalErr
+}
+
+// DestinationNeighbors returns all the neighbors of the destinations of each link from origin.
+// Get a node, get its links, get destinations, and return the neighborhoods of those destination.
+// As an example, consider this graph:
+// a -- b -- c
+// Result of DestinationNeighbors(b, graph) is { neighborhood of a , neighborhood of b }
+//
+// Now, formally:
+// * if node is not in the graph, it returns nil, nil.
+// * if the node is isolated, result is an empty iterator, nil
+// * otherwise, node is not isolated and all its neighbors form a set that is the expected result
+func DestinationNeighbors[N Node, L Link[N]](origin N, graph StructuredGraph[N, L]) (NeighborhoodIterator[N, L], error) {
+	if graph == nil {
+		return nil, errors.New("nil graph")
+	}
+
+	neighbors, errNeighbors := graph.Neighbors(origin)
+	if errNeighbors != nil {
+		return nil, errNeighbors
+	} else if neighbors == nil {
+		// node not in the graph
+		return nil, nil
+	}
+
+	links, errLinks := neighbors.Links()
+	if errLinks != nil {
+		return nil, errLinks
+	}
+
+	var result MapFilterIterator[L, Neighborhood[N, L]]
+	result.Iterator = links
+	result.Filter = func(n Neighborhood[N, L]) bool { return !IsIsolatedNeighborhood(n) }
+	result.Mapper = func(link L) (Neighborhood[N, L], error) {
+		_, destinationNode := FollowLink(origin, link)
+		if n, err := graph.Neighbors(destinationNode); err != nil {
+			return nil, err
+		} else {
+			return n, nil
+		}
+	}
+
+	return &result, nil
 }

@@ -10,10 +10,11 @@ So far:
 * random graphs with preferential attachment (Barabasi Albert) and GNP (fixed nodes size, links by probability)
 * basic stats: degree distribution, size, etc
 * gephi export for data type. Just enough to create data visualizations of graphs, **this is not a gexf library with all gexf features**
+* walkthroughs (everything is ready: iterators, neighbors, etc. Example is on the central graph connected components)
 
 ### Next features (working on it)
 
-* walkthroughs
+* Make data for percolation study
 
 ### Features to implement one day
 
@@ -58,8 +59,9 @@ So far:
 1. Open the `examples/` code and read code to get the purpose of some important classes
 2. Start with [general definition of a graph](https://github.com/zefrenchwan/nodz/blob/main/graphs/structures.go) 
 3. Read `graphs/` interfaces if you need more details about `nodes`, `neighbors` or `links`. There should be no surprise, it is basic definition 
-4. Have a look at `internal_test/local_test` and start with value based graphs. Go on with central graphs tests
-5. Dig into implementation details if you like
+4. Have a look at `graphs_test/` to understand some high level features
+5. Then, you may want to dig into `internal_test/local_test`
+6. Dig into implementation details if you like
 
 ## You like graphs or network science ? 
 
