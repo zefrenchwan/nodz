@@ -11,15 +11,25 @@ type RandomLinkGenerator[N Node, L Link[N]] func(source, destination N) L
 // There are many kinds of random graphs.
 // So interface defintion may change in the future to include new kinds.
 type RandomGraphGenerator[N Node, L Link[N]] interface {
-	// GNP returns a graph with size nodes, each couple of nodes is linked with a given probabilty.
+	// DirectedGNP returns a graph with size nodes, each couple of nodes is linked with a given probabilty.
 	// Each node and each link are generated via generators (one for nodes, one for links).
 	// Special case for size == 0, result is an empty graph.
 	// Result is either the graph, or an error.
 	// For instance, a negative size returns an error, or a probability outside [0,1] makes an error too.
 	//
-	// It is possible to return a graph with mixed links: some directed, some undirected. But it is not standard usage.
-	// Either the graph is fully undirected, or fully directed and may have double links between source and destination
-	GNP(size int, probability float64, nodeGenerator RandomNodeGenerator[N], linkGenerator RandomLinkGenerator[N, L]) (CentralStructureGraph[N, L], error)
+	// ATTENTION: expected number of links is probability * ( size - 1)
+	DirectedGNP(size int, probability float64, nodeGenerator RandomNodeGenerator[N], linkGenerator RandomLinkGenerator[N, L]) (CentralStructureGraph[N, L], error)
+
+	// UndirectedGNP returns a graph with size nodes.
+	// Each node and each link are generated via generators (one for nodes, one for links).
+	// Special case for size == 0, result is an empty graph.
+	// Result is either the graph, or an error.
+	// For instance, a negative size returns an error, or a probability outside [0,1] makes an error too.
+	//
+	// ATTENTION: expected number of links is probability * 0.5 * (size - 1).
+	// Given a pair (source, dest), either source - dest or dest - source is tested, not both.
+	UndirectedGNP(size int, probability float64, nodeGenerator RandomNodeGenerator[N], linkGenerator RandomLinkGenerator[N, L]) (CentralStructureGraph[N, L], error)
+
 	// UndirectedPreferentialAttachement returns a graph based on the Barabasi Albert model.
 	// All links are UNdirected.
 	// From a complete graph with initialSize nodes, add nodes until maxSize is reached.

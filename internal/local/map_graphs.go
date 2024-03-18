@@ -64,6 +64,51 @@ func (am *MapGraph[N, L]) AddLink(link L) error {
 	return nil
 }
 
+func (am *MapGraph[N, L]) HasLink(link L) bool {
+	source := link.Source()
+	dest := link.Destination()
+	sourceIndex := am.nodes.hasValue(source)
+	destIndex := am.nodes.hasValue(dest)
+
+	// basic case: nodes are not in the graph
+	if sourceIndex == -1 || destIndex == -1 {
+		return false
+	}
+
+	// test if the link from source to dest is in the graph
+	isLinkSource := false
+	if v, ok := am.content[sourceIndex]; ok {
+		if l, lok := v.values[destIndex]; lok && len(l) != 0 {
+			for _, currentLink := range l {
+				if link.SameLink(currentLink) {
+					isLinkSource = true
+					break
+				}
+			}
+		}
+	}
+
+	if isLinkSource {
+		return true
+	} else if link.IsDirected() {
+		return false
+	}
+
+	// From here, link is not directed, so it may appear as the opposite
+	if v, ok := am.content[destIndex]; ok {
+		if l, lok := v.values[sourceIndex]; lok && len(l) != 0 {
+			for _, currentLink := range l {
+				if link.SameLink(currentLink) {
+					return true
+				}
+			}
+		}
+	}
+
+	// neither as (source, dest) nor as (dest, source)
+	return false
+}
+
 // RemoveLink removes a link if any, does nothing otherwise
 func (am *MapGraph[N, L]) RemoveLink(link L) error {
 	source := link.Source()

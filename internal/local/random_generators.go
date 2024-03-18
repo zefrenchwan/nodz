@@ -13,11 +13,39 @@ type RandomGenerator[N graphs.Node, L graphs.Link[N]] struct {
 	// empty struct so far, using default golang random numbers generator.
 }
 
-// GNP returns a random graph of size n and with a probability of p to create links.
-// Algorithm is to create nodes, then run each possible couple
-func (rm RandomGenerator[N, L]) GNP(
+// DirectedGNP returns a directed GNP graph
+func (rm RandomGenerator[N, L]) DirectedGNP(
+	size int, // number of nodes
+	probability float64, // linking probability
+	nodeGenerator graphs.RandomNodeGenerator[N], // generates a new node at each call
+	linkGenerator graphs.RandomLinkGenerator[N, L], // generates a new link at each call
+) (
+	graphs.CentralStructureGraph[N, L], // random graph
+	error, // error during build
+) {
+	return rm.gnp(size, probability, true, nodeGenerator, linkGenerator)
+}
+
+// UndirectedGNP returns a undirected GNP graph
+func (rm RandomGenerator[N, L]) UndirectedGNP(
+	size int, // number of nodes
+	probability float64, // linking probability
+	nodeGenerator graphs.RandomNodeGenerator[N], // generates a new node at each call
+	linkGenerator graphs.RandomLinkGenerator[N, L], // generates a new link at each call
+) (
+	graphs.CentralStructureGraph[N, L], // random graph
+	error, // error during build
+) {
+	return rm.gnp(size, probability, false, nodeGenerator, linkGenerator)
+}
+
+// gnp returns a random graph of size n and with a probability of p to create links.
+// For directed, we test each couple (source, destination).
+// For undirected, we test EITHER (source, destination) OR (destination, source), never both
+func (rm RandomGenerator[N, L]) gnp(
 	size int, // number of nodes
 	probability float64, // probability to create a link
+	directedAlgorithm bool, // true for directed, false for undirected
 	nodeGenerator graphs.RandomNodeGenerator[N], // generates a random node
 	linkGenerator graphs.RandomLinkGenerator[N, L], // generates a random link
 ) (
@@ -50,31 +78,16 @@ func (rm RandomGenerator[N, L]) GNP(
 	for i, source := range nodes {
 		for j, dest := range nodes {
 			// exclude links having source == destination
-			if i == j || rm.nextFloat() > probability {
+			if i == j || (!directedAlgorithm && i > j) {
+				continue
+			} else if rm.nextFloat() > probability {
 				continue
 			}
 
 			link := linkGenerator(source, dest)
-			// Two cases here:
-			// * directed links, no problem, source and destination are different, so no problem.
-			// * undirected links: if this is the second time we deal with source and destination as a set,
-			// it normally should be considered as already processed.
-			// But...
-			// It is pratically possible that your definition of sameLink allows undirected links
-			// to NOT be the same provided they have same source and destination (as sets).
-			// So algorithm is to test if there is a link already and test SameLink.
-			// If SameLink ensures that two links are the same if they have same source and direction,
-			// this algorithm works as expected.
-			v, found := result.content[i]
-			switch {
-			case !found:
-				// no link was inserted for sure
-				result.AddLink(link)
-			case len(v.values[j]) == 0:
-				// no link inserted too
-				result.AddLink(link)
-			case !v.values[j][0].SameLink(link):
-				// previous link, but not the same
+			if link.IsDirected() != directedAlgorithm {
+				return &result, errors.New("inconsistent link type")
+			} else if !result.HasLink(link) {
 				result.AddLink(link)
 			}
 		}

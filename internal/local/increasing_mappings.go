@@ -25,6 +25,17 @@ func newIncreasingMapping[V any](equalsFn func(V, V) bool) increasingMapping[V] 
 	return result
 }
 
+// hasValue returns the index of the value if it exists, -1 otherwise
+func (im *increasingMapping[V]) hasValue(value V) int {
+	for k, v := range im.values {
+		if im.equals(v, value) {
+			return k
+		}
+	}
+
+	return -1
+}
+
 // addValue adds a value if not already there, and returns the index of the value
 func (im *increasingMapping[V]) addValue(value V) int {
 	for k, v := range im.values {

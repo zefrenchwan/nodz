@@ -11,7 +11,7 @@ import (
 // It ensures that we know the graph: all nodes are disconnected
 func TestGnpProbaZero(t *testing.T) {
 	randomizer := local.RandomGenerator[internal.IdNode, internal.UndirectedSimpleLink[internal.IdNode]]{}
-	result, errGraph := randomizer.GNP(5, 0.0, internal.NewRandomIdNode, internal.NewUndirectedSimpleLink)
+	result, errGraph := randomizer.UndirectedGNP(5, 0.0, internal.NewRandomIdNode, internal.NewUndirectedSimpleLink)
 	if errGraph != nil {
 		t.Fail()
 	}
@@ -50,7 +50,7 @@ func TestGnpProbaZero(t *testing.T) {
 // It means that graph should be complete
 func TestGnpProbaOne(t *testing.T) {
 	randomizer := local.RandomGenerator[internal.IdNode, internal.UndirectedSimpleLink[internal.IdNode]]{}
-	result, errGraph := randomizer.GNP(5, 1.0, internal.NewRandomIdNode, internal.NewUndirectedSimpleLink)
+	result, errGraph := randomizer.UndirectedGNP(5, 1.0, internal.NewRandomIdNode, internal.NewUndirectedSimpleLink)
 	if errGraph != nil {
 		t.Fail()
 	}
