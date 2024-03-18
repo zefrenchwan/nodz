@@ -66,36 +66,44 @@ type CentralStructureGraph[N Node, L Link[N]] interface {
 	AllNodes() (NodesIterator[N], error)
 }
 
-// CountConnectedComponents applies to undirected graphs and returns the number of connected components of the graph.
+// ConnectedComponentsSize applies to undirected graphs and returns the size of each connected component within the graph.
+// In particular, the size of the max of the number of connected components.
+// Assumption was the number of connected components is low enough to fit in the graph, no matter the graph implementation.
+//
 // General algorithm is simple:
-// Create a counter set to 0
+// Create a counter map
 // Mark all nodes in the graph as not seen
 // Peek a node
-// Find its connected component, and unmark each node of the same connected component
+// Find its connected component, set its size in the counter map
 // If there is a left node, do the same with it
 // Otherwise, return the counter of connected components
 //
 // To find the connected components of a node, we use a breadth first search.
 // Algorithm is:
+// initialize size of the connected component to 0
 // create a fifo
 // add first node (the one we start connected component with)
 // while there is a node in the fifo
-// pick it, and add all its neighbors in the fifo
-func CountConnectedComponents[N Node, L Link[N]](
+// pick it, unmark it from the original set of marked nodes,
+// update size, and add all its neighbors in the fifo
+func ConnectedComponentsSize[N Node, L Link[N]](
 	graph CentralStructureGraph[N, L], // graph to find connected components within
 	setBuilder AbstractSetBuilder[N], // to make a set implementation able to deal with the graph
 	dynamicBuilder DynamicIteratorBuilder[N], // to make a dynamic builder able to deal with the graph
-) (int64, // number of connected components in the graph
+) (map[int64]int64, // for each connected component, its size
 	error, // for any error
 ) {
+	stats := make(map[int64]int64)
+
+	// put all nodes into the set of marked ones
 	itNodes, errItNodes := graph.AllNodes()
 	if errItNodes != nil {
-		return -1, errItNodes
+		return stats, errItNodes
 	}
 
 	markedNodes, errSet := setBuilder(func(a, b N) bool { return a.SameNode(b) })
 	if errSet != nil {
-		return -1, errSet
+		return stats, errSet
 	}
 
 	var globalErr error
@@ -113,13 +121,14 @@ func CountConnectedComponents[N Node, L Link[N]](
 			continue
 		}
 	}
+	// marked ones contains all the nodes of the graph
 
 	if globalErr != nil {
-		return -1, globalErr
+		return stats, globalErr
 	}
 
-	// counter of connected components
-	var result int64
+	// index of current connected components
+	var index int64
 	for {
 		if empty, err := markedNodes.IsEmpty(); err != nil {
 			globalErr = errors.Join(globalErr, err)
@@ -128,15 +137,16 @@ func CountConnectedComponents[N Node, L Link[N]](
 			break
 		}
 
-		nextOne, errPop := markedNodes.Peek()
-		if errPop != nil {
-			globalErr = errors.Join(globalErr, errPop)
+		nextOne, errPeek := markedNodes.Peek()
+		if errPeek != nil {
+			globalErr = errors.Join(globalErr, errPeek)
 			continue
 		}
 
+		// fifo for walkthrough
 		fifo, errFifo := dynamicBuilder()
 		if errFifo != nil {
-			globalErr = errors.Join(globalErr, errPop)
+			globalErr = errors.Join(globalErr, errFifo)
 			break
 		}
 
@@ -144,6 +154,9 @@ func CountConnectedComponents[N Node, L Link[N]](
 			globalErr = errors.Join(globalErr, err)
 			continue
 		}
+
+		// size of the connected component
+		var size int64
 
 		// find its connected component using a breadth first search
 		for {
@@ -154,7 +167,7 @@ func CountConnectedComponents[N Node, L Link[N]](
 				globalErr = errors.Join(globalErr, errNext)
 				break
 			} else if v, errV := fifo.Value(); errV != nil {
-				globalErr = errors.Join(globalErr, errNext)
+				globalErr = errors.Join(globalErr, errV)
 				continue
 			} else if has, errHas := markedNodes.Has(v); errHas != nil || !has {
 				globalErr = errors.Join(globalErr, errHas)
@@ -167,6 +180,8 @@ func CountConnectedComponents[N Node, L Link[N]](
 			if err := markedNodes.Remove(currentNode); err != nil {
 				globalErr = errors.Join(globalErr, err)
 				break
+			} else {
+				size++
 			}
 
 			// next step is to keep walking through the graph by adding neighbors to the fifo
@@ -193,14 +208,15 @@ func CountConnectedComponents[N Node, L Link[N]](
 		}
 
 		if globalErr != nil {
-			return -1, globalErr
+			return stats, globalErr
 		}
 
 		// else, we went through a full connected component, move to the next one
-		result++
+		stats[index] = size
+		index++
 	}
 
-	return result, globalErr
+	return stats, globalErr
 }
 
 // DestinationNeighbors returns all the neighbors of the destinations of each link from origin.

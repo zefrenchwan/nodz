@@ -1,6 +1,7 @@
 package graphs_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/zefrenchwan/nodz.git/graphs"
@@ -41,9 +42,19 @@ func TestGraphConnectedComponents(t *testing.T) {
 		return &result, nil
 	}
 
-	if count, err := graphs.CountConnectedComponents(&graph, setBuilder, itBuilder); err != nil {
+	if stats, err := graphs.ConnectedComponentsSize(&graph, setBuilder, itBuilder); err != nil {
 		t.Fail()
-	} else if count != 3 {
+	} else if len(stats) != 3 {
 		t.Error("expected 3 connected components")
+	} else {
+		values := make([]int64, 0)
+		for _, v := range stats {
+			values = append(values, v)
+		}
+
+		slices.Sort(values)
+		if slices.Compare(values, []int64{1, 3, 4}) != 0 {
+			t.Fail()
+		}
 	}
 }
