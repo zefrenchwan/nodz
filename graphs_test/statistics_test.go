@@ -61,3 +61,19 @@ func TestDensities(t *testing.T) {
 		t.Errorf("max is 20, current is 10, expected 0.5, got %f", stats.DirectedDensity())
 	}
 }
+
+func TestAverageDegrees(t *testing.T) {
+	stats := graphs.NetworkStatistics{
+		DirectedSize:   10,
+		UndirectedSize: 8,
+		NodesSize:      5,
+	}
+
+	if math.Abs(stats.AverageUndirectedDegree()-3.2) > 0.001 {
+		t.Errorf("max is 10, current is 8, expected 0.8, got %f", stats.UndirectedDensity())
+	}
+
+	if math.Abs(stats.AverageDirectedDegree()-2.0) > 0.001 {
+		t.Errorf("max is 20, current is 10, expected 0.5, got %f", stats.DirectedDensity())
+	}
+}

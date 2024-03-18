@@ -16,6 +16,24 @@ type NetworkStatistics struct {
 	DirectedSize int64
 }
 
+// AverageDirectedDegree returns -1 for 0 denominator, the average degree of the directed graph otherwise
+func (n NetworkStatistics) AverageDirectedDegree() float64 {
+	if n.NodesSize == 0 {
+		return -1.0
+	}
+
+	return float64(n.DirectedSize) / float64(n.NodesSize)
+}
+
+// AverageUndirectedDegree returns -1 for 0 denominator, the average degree of the undirected graph otherwise
+func (n NetworkStatistics) AverageUndirectedDegree() float64 {
+	if n.NodesSize == 0 {
+		return -1.0
+	}
+
+	return 2.0 * float64(n.UndirectedSize) / float64(n.NodesSize)
+}
+
 // DirectedDensity calculates the fraction of links compared to its possible max.
 // Default value for graphs with nodesSize < 2 is 0.0
 func (n NetworkStatistics) DirectedDensity() float64 {

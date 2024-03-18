@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"github.com/zefrenchwan/nodz.git/examples"
 )
 
 func main() {
-	fmt.Println("nodz is more a library")
+	examples.GNPCriticalPointAppearance()
 }

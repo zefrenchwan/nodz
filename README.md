@@ -14,7 +14,7 @@ So far:
 
 ### Next features (working on it)
 
-* Make data for percolation study
+* graph data visualization 
 
 ### Features to implement one day
 
@@ -22,9 +22,6 @@ So far:
 * neo4j import and export
 * observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
 * gexf import and export (again, not planning a full support for gexf)
-
-And, still digging, but a must-have:
-* graph data visualization 
 
 ### Features that sound like good ideas, but not sure yet
 
@@ -36,6 +33,7 @@ And, still digging, but a must-have:
 
 ## Implementation details 
 
+* `examples/` contains nice code, to show some use cases
 * `graphs/` is about main definitions.  
 * `internal/` is about main implementations. 
 * Use of iterators: Some graphs are HUGE, so  using **iterators** is more flexible and efficient than slices (lazy loading / pagination)
