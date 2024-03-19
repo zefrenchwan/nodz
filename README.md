@@ -10,24 +10,27 @@ So far:
 * random graphs with preferential attachment (Barabasi Albert) and GNP (fixed nodes size, links by probability)
 * basic stats: degree distribution, size, etc
 * gephi export for data type. Just enough to create data visualizations of graphs, **this is not a gexf library with all gexf features**
-* walkthroughs (everything is ready: iterators, neighbors, etc. Example is on the central graph connected components)
+* large structures definition: sets, iterators. Implementations so far are local, but everything is ready for other definitions 
+* connected component 
 
 ### Next features (working on it)
 
+* walkthroughs and walks in graphs
 * graph data visualization 
 
 ### Features to implement one day
 
-* graph features: connected component, graph diameter, etc
+* graph features: graph diameter, etc
 * neo4j import and export
 * observability: observer over nodes to detect changes (node creation, deletion, or links changes. Even, for some nodes, changes of states)
 * gexf import and export (again, not planning a full support for gexf)
 
 ### Features that sound like good ideas, but not sure yet
 
+* REST endpoint to deal with graphs 
 * DSL for non technical use (create a random graph, print basic stats, etc)
 * Sort of jupyter interface to use that DSL
-* Data viz via an embedded server
+* Event based changes on graphs, apache kafka sounds like a good option
 * Distibute calculation (but, a huge amount of work)
 
 

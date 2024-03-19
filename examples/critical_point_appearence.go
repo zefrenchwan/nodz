@@ -16,8 +16,8 @@ func GNPCriticalPointAppearance() {
 
 	const N = 50
 	fmt.Printf("Critical point at p = %0.5f and expected size %0.5f\n", 1.0/(N-1), math.Pow(float64(N), 0.66))
-	fmt.Printf("Connected regime when average degree is way larger than %0.5f and expected size %d \n\n", math.Log(float64(N)), N)
-	fmt.Println("Starting simulation\n\n\n")
+	fmt.Printf("Connected regime appears when average degree is larger than %0.5f and expected size is %d \n\n", math.Log(float64(N)), N)
+	fmt.Printf("Starting simulation\n\n\n")
 
 	setBuilder := func(f graphs.SetEqualsFunction[internal.IdNode]) (graphs.AbstractSet[internal.IdNode], error) {
 		result := local.NewSlicesSet(f)
