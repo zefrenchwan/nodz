@@ -20,7 +20,7 @@ func TestTypePropertiesLinkCreation(t *testing.T) {
 		t.Fail()
 	}
 
-	if link.SameLink(reverseLink) {
+	if link.SameLink(&reverseLink) {
 		t.Fail()
 	}
 

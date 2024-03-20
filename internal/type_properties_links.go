@@ -50,16 +50,30 @@ func (tpl *TypePropertiesLink[N]) Destination() N {
 }
 
 // SameLink returns true for same type, same source and destination, false for any other case
-func (tpl *TypePropertiesLink[N]) SameLink(link TypePropertiesLink[N]) bool {
+func (tpl *TypePropertiesLink[N]) SameLink(link graphs.Link[N]) bool {
 	if tpl == nil {
+		return link == nil
+	} else if link == nil {
 		return false
 	}
 
-	if link.linkType != tpl.linkType {
+	var otherLink *TypePropertiesLink[N]
+	if val, ok := link.(*TypePropertiesLink[N]); !ok {
+		return false
+	} else {
+		otherLink = val
+	}
+
+	if otherLink.linkType != tpl.linkType {
 		return false
 	}
 
-	return tpl.linkSource.SameNode(link.linkSource) && tpl.linkDestination.SameNode(link.linkDestination)
+	return tpl.linkSource.SameNode(otherLink.linkSource) && tpl.linkDestination.SameNode(otherLink.linkDestination)
+}
+
+// IsDirected returns true by definition
+func (tpl *TypePropertiesLink[N]) IsDirected() bool {
+	return true
 }
 
 // Properties returns a copy of the properties of the link, nil for nil
