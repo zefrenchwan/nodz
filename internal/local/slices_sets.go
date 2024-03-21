@@ -7,7 +7,11 @@ import (
 	"github.com/zefrenchwan/nodz.git/graphs"
 )
 
-// SlicesSet is a set based on slices
+// SlicesSet is a set based on slices.
+// Best implementation would be maps due to its O(1) Has.
+// But, in Golang, to be a key type, type has to be comparable.
+// (see https://go.dev/ref/spec#Comparison_operators).
+// We want the type to be any, so we use slices.
 type SlicesSet[T any] struct {
 	// equality returns true if two instances of T are the same (for set equality)
 	equality graphs.SetEqualsFunction[T]
