@@ -166,3 +166,72 @@ func TestIntervalComplement(t *testing.T) {
 		t.Error("complement failure for semi bounded intervals")
 	}
 }
+
+func TestIntervalIntersection(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+	var a, b, result, expected patterns.Interval[int]
+
+	// test empty and full
+	a = comparator.NewFullInterval()
+	b = comparator.NewEmptyInterval()
+	result = comparator.Intersection(a, b)
+	if !result.IsEmpty() {
+		t.Fail()
+	}
+
+	result = comparator.Intersection(b, a)
+	if !result.IsEmpty() {
+		t.Fail()
+	}
+
+	result = comparator.Intersection(a, a)
+	if !result.IsFull() {
+		t.Fail()
+	}
+
+	// test semi bounded
+	a = comparator.NewLeftInfiniteInterval(10, true)
+	b, _ = comparator.NewFiniteInterval(0, 20, true, false)
+	expected, _ = comparator.NewFiniteInterval(0, 10, true, true)
+	result = comparator.Intersection(a, b)
+	if comparator.CompareInterval(expected, result) != 0 {
+		t.Fail()
+	}
+
+	result = comparator.Intersection(b, a)
+	if comparator.CompareInterval(expected, result) != 0 {
+		t.Fail()
+	}
+
+	a = comparator.NewLeftInfiniteInterval(10, true)
+	b = comparator.NewLeftInfiniteInterval(50, false)
+	expected = comparator.NewLeftInfiniteInterval(10, true)
+	result = comparator.Intersection(a, b)
+	if comparator.CompareInterval(expected, result) != 0 {
+		t.Fail()
+	}
+
+	a = comparator.NewLeftInfiniteInterval(10, true)
+	b = comparator.NewRightInfiniteInterval(0, false)
+	expected, _ = comparator.NewFiniteInterval(0, 10, false, true)
+	result = comparator.Intersection(a, b)
+	if comparator.CompareInterval(expected, result) != 0 {
+		t.Fail()
+	}
+
+	// test bounded
+	a, _ = comparator.NewFiniteInterval(0, 5, true, false)
+	b, _ = comparator.NewFiniteInterval(100, 105, true, false)
+	result = comparator.Intersection(a, b)
+	if !result.IsEmpty() {
+		t.Fail()
+	}
+
+	a, _ = comparator.NewFiniteInterval(0, 102, true, false)
+	b, _ = comparator.NewFiniteInterval(100, 105, true, false)
+	result = comparator.Intersection(a, b)
+	expected, _ = comparator.NewFiniteInterval(100, 102, true, false)
+	if comparator.CompareInterval(result, expected) != 0 {
+		t.Fail()
+	}
+}

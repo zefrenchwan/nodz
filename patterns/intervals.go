@@ -211,3 +211,88 @@ func (t TypedComparator[T]) Complement(i Interval[T]) []Interval[T] {
 
 	return []Interval[T]{result, otherResult}
 }
+
+// Intersection returns the intersection of base and others
+func (t TypedComparator[T]) Intersection(base Interval[T], others ...Interval[T]) Interval[T] {
+	current := base
+	for _, other := range others {
+		// perform the intersection of current and other
+		if other.IsEmpty() || current.IsEmpty() {
+			current = t.NewEmptyInterval()
+			break
+		} else if current.IsFull() {
+			current = other
+			continue
+		} else if other.IsFull() {
+			continue
+		}
+
+		var resMin, resMax T
+		var resInfiniteMin, resInfiniteMax bool
+		var resInMin, resInMax bool
+
+		// find left borders
+		if current.minInfinite && other.minInfinite {
+			resInfiniteMin = true
+		} else if current.minInfinite {
+			resMin = other.min
+			resInMin = other.minIncluded
+		} else if other.minInfinite {
+			resMin = current.min
+			resInMin = current.minIncluded
+		} else if leftCompare := t.Compare(current.min, other.min); leftCompare == 0 {
+			resMin = current.min
+			resInMin = current.minIncluded && other.minIncluded
+		} else if leftCompare < 0 {
+			resMin = other.min
+			resInMin = other.minIncluded
+		} else {
+			resMin = current.min
+			resInMin = current.minIncluded
+		}
+
+		// find right borders
+		if current.maxInfinite && other.maxInfinite {
+			resInfiniteMax = true
+		} else if current.maxInfinite {
+			resMax = other.max
+			resInMax = other.maxIncluded
+		} else if other.maxInfinite {
+			resMax = current.max
+			resInMax = current.maxIncluded
+		} else if rightCompare := t.Compare(current.max, other.max); rightCompare == 0 {
+			resMax = current.max
+			resInMax = current.maxIncluded && other.maxIncluded
+		} else if rightCompare < 0 {
+			resMax = current.max
+			resInMax = current.maxIncluded
+		} else {
+			resMax = other.max
+			resInMax = other.maxIncluded
+		}
+
+		// make interval if possible.
+		// It not, it means that result is empty, and stop.
+		// If it is possible, it is the new current
+		current = Interval[T]{
+			empty:       false,
+			min:         resMin,
+			max:         resMax,
+			minIncluded: resInMin,
+			maxIncluded: resInMax,
+			minInfinite: resInfiniteMin,
+			maxInfinite: resInfiniteMax,
+		}
+
+		if !current.maxInfinite && !current.minInfinite {
+			compare := t.Compare(resMin, resMax)
+			if compare > 0 {
+				current.empty = true
+			} else if compare == 0 {
+				current.empty = !(resInMax && resInMin)
+			}
+		}
+	}
+
+	return current
+}
