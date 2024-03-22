@@ -15,8 +15,10 @@ So far:
 
 ### Next features (working on it)
 
-* walkthroughs and walks in graphs
-* graph data visualization 
+| branch | feature |
+|--------|---------|
+| main | walkthroughs |
+| patterns | inference in graphs |
 
 ### Features to implement one day
 
@@ -32,6 +34,7 @@ So far:
 * Sort of jupyter interface to use that DSL
 * Event based changes on graphs, apache kafka sounds like a good option
 * Distibute calculation (but, a huge amount of work)
+* graph data visualization using a dedicated server (cross project, using d3.js ?)
 
 
 ## Implementation details 
