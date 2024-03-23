@@ -401,7 +401,7 @@ func TestIntervalUnionFinite(t *testing.T) {
 	expected, _ = comparator.NewFiniteInterval(0, 10, true, true)
 	result = comparator.Union(left, right)
 	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
-		t.Error("one contains the other with same values")
+		t.Error("non separated intervals")
 	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
 		t.Error("broken symetry")
 	}

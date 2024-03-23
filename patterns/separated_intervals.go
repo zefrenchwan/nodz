@@ -7,3 +7,14 @@ type SeparatedIntervals[T any] struct {
 	// Invariant is: none empty, if (a,b) in elements then a and b are separated
 	elements []Interval[T]
 }
+
+// NewSeparatedIntervals returns a new separated intervals with initial value
+func NewSeparatedIntervals[T any](initialValue Interval[T]) SeparatedIntervals[T] {
+	var result SeparatedIntervals[T]
+	result.elements = make([]Interval[T], 0)
+	if !initialValue.IsEmpty() {
+		result.elements = append(result.elements, initialValue)
+	}
+
+	return result
+}
