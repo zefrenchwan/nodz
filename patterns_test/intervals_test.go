@@ -1,6 +1,7 @@
 package patterns_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/zefrenchwan/nodz.git/patterns"
@@ -36,9 +37,9 @@ func TestIntervalsCompare(t *testing.T) {
 
 	if comparator.CompareInterval(b, b) != 0 {
 		t.Error("failed test on fulll is full")
-	} else if comparator.CompareInterval(b, a) > 0 {
+	} else if comparator.CompareInterval(b, a) <= 0 {
 		t.Error("failed full is more than anything")
-	} else if comparator.CompareInterval(a, b) < 0 {
+	} else if comparator.CompareInterval(a, b) >= 0 {
 		t.Error("failed full is more than anything")
 	}
 
@@ -233,5 +234,175 @@ func TestIntervalIntersection(t *testing.T) {
 	expected, _ = comparator.NewFiniteInterval(100, 102, true, false)
 	if comparator.CompareInterval(result, expected) != 0 {
 		t.Fail()
+	}
+}
+
+func slicesIntervalCompare[T any](comparator patterns.TypedComparator[T], expected []patterns.Interval[T], got []patterns.Interval[T]) bool {
+	if len(expected) != len(got) {
+		return false
+	}
+
+	for _, value := range expected {
+		localTest := func(a patterns.Interval[T]) bool { return comparator.CompareInterval(a, value) == 0 }
+		if !slices.ContainsFunc(got, localTest) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func TestIntervalUnion(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	// test union of empty sets
+	unions := []patterns.Interval[int]{
+		comparator.NewEmptyInterval(), comparator.NewEmptyInterval(),
+	}
+
+	result := comparator.Union(comparator.NewEmptyInterval(), unions...)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("union of empty sets should be empty set")
+	}
+
+	// test with one full
+	result = comparator.Union(comparator.NewFullInterval(), unions...)
+	if len(result) != 1 || !result[0].IsFull() {
+		t.Error("union of empty sets should be empty set")
+	}
+
+	// test max values only
+	result = comparator.Union(comparator.NewLeftInfiniteInterval(10, true), comparator.NewLeftInfiniteInterval(0, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewLeftInfiniteInterval(10, true)) != 0 {
+		t.Error("error when filling max limit")
+	}
+
+	result = comparator.Union(comparator.NewLeftInfiniteInterval(10, true), comparator.NewLeftInfiniteInterval(10, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewLeftInfiniteInterval(10, true)) != 0 {
+		t.Error("error when filling max limit")
+	}
+
+	result = comparator.Union(comparator.NewLeftInfiniteInterval(10, true), comparator.NewLeftInfiniteInterval(100, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewLeftInfiniteInterval(100, false)) != 0 {
+		t.Error("error when filling max limit")
+	}
+
+	// test min values only
+	result = comparator.Union(comparator.NewRightInfiniteInterval(10, true), comparator.NewRightInfiniteInterval(0, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewRightInfiniteInterval(0, false)) != 0 {
+		t.Error("error when filling min limit")
+	}
+
+	result = comparator.Union(comparator.NewRightInfiniteInterval(0, true), comparator.NewRightInfiniteInterval(0, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewRightInfiniteInterval(0, true)) != 0 {
+		t.Error("error when filling min limit")
+	}
+
+	result = comparator.Union(comparator.NewRightInfiniteInterval(0, true), comparator.NewRightInfiniteInterval(10, false))
+	if len(result) != 1 && comparator.CompareInterval(result[0], comparator.NewRightInfiniteInterval(0, true)) != 0 {
+		t.Error("error when filling min limit")
+	}
+
+	// test all disjoin sets
+	finite, _ := comparator.NewFiniteInterval(10, 100, false, true)
+	left := comparator.NewLeftInfiniteInterval(0, false)
+	right := comparator.NewRightInfiniteInterval(1000, false)
+
+	result = comparator.Union(left, finite, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{left, right, finite}, result) {
+		t.Error("grouping separated intervals")
+	}
+
+	// group two infinite intervals if possible
+	left = comparator.NewLeftInfiniteInterval(0, false)
+	right = comparator.NewRightInfiniteInterval(0, false)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{left, right}, result) {
+		t.Error("grouping intervals with same values but separated borders")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	left = comparator.NewLeftInfiniteInterval(0, false)
+	right = comparator.NewRightInfiniteInterval(10, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{left, right}, result) {
+		t.Error("grouping intervals with same values but separated borders")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	left = comparator.NewLeftInfiniteInterval(0, false)
+	right = comparator.NewRightInfiniteInterval(0, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{comparator.NewFullInterval()}, result) {
+		t.Error("grouping intervals with same values but separated borders")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	left = comparator.NewLeftInfiniteInterval(10, false)
+	right = comparator.NewRightInfiniteInterval(0, false)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{comparator.NewFullInterval()}, result) {
+		t.Error("grouping non separated intervals")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+}
+
+func TestIntervalUnionFinite(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	// separated despite same values
+	left := comparator.NewLeftInfiniteInterval(10, false)
+	right, _ := comparator.NewFiniteInterval(10, 100, false, true)
+	result := comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{left, right}, result) {
+		t.Error("boundaries failure: same values, both excluded")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	// totally separated
+	left, _ = comparator.NewFiniteInterval(0, 5, false, false)
+	right, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{left, right}, result) {
+		t.Error("totally separated intervals failure")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	// right contains left
+	left, _ = comparator.NewFiniteInterval(0, 5, false, false)
+	right, _ = comparator.NewFiniteInterval(-5, 50, false, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{right}, result) {
+		t.Error("one contains the other")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	// right contains left with common values
+	left, _ = comparator.NewFiniteInterval(0, 5, true, false)
+	right, _ = comparator.NewFiniteInterval(0, 5, false, true)
+	expected, _ := comparator.NewFiniteInterval(0, 5, true, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("one contains the other with same values")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
+	}
+
+	// not empty intersection
+	left, _ = comparator.NewFiniteInterval(0, 5, true, false)
+	right, _ = comparator.NewFiniteInterval(2, 10, false, true)
+	expected, _ = comparator.NewFiniteInterval(0, 10, true, true)
+	result = comparator.Union(left, right)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("one contains the other with same values")
+	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
+		t.Error("broken symetry")
 	}
 }

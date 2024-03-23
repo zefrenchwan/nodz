@@ -1,6 +1,8 @@
 package patterns
 
-import "errors"
+import (
+	"errors"
+)
 
 // TypedComparator defines a compare function over a type
 type TypedComparator[T any] struct {
@@ -119,23 +121,26 @@ func (t TypedComparator[T]) NewFiniteInterval(left, right T, leftIn, rightIn boo
 func (t TypedComparator[T]) CompareInterval(a, b Interval[T]) int {
 	// deal with empty or full intervals
 	switch {
-	case a.empty:
-		if b.empty {
+	case a.IsEmpty():
+		if b.IsEmpty() {
 			return 0
 		}
 
 		return 1
-	case b.empty:
+	case b.IsEmpty():
 		return -1
-	case a.maxInfinite && a.minInfinite:
+	case a.IsFull():
 		if b.minInfinite && b.maxInfinite {
 			return 0
 		}
 
+		return 1
+	case b.IsFull():
 		return -1
 	}
 
-	// deal with left boundaries
+	// deal with left boundaries.
+	// If both left infinite, they are equals
 	switch {
 	case a.minInfinite && !b.minInfinite:
 		return -1
@@ -157,9 +162,9 @@ func (t TypedComparator[T]) CompareInterval(a, b Interval[T]) int {
 	case a.maxInfinite && b.maxInfinite:
 		return 0
 	case a.maxInfinite:
-		return -1
-	case b.maxInfinite:
 		return 1
+	case b.maxInfinite:
+		return -1
 	}
 
 	comparison := t.Compare(a.max, b.max)
@@ -295,4 +300,185 @@ func (t TypedComparator[T]) Intersection(base Interval[T], others ...Interval[T]
 	}
 
 	return current
+}
+
+// areSeparated returns true if sets are non joinable.
+// Intervals are joinable if their union form a set and not two. Formally:
+// their intersection is not empty
+// OR if one is ..., b) and the other is (b, ...) and b belongs in one of them.
+// Joinable sets may be joined to create their union.
+func (t TypedComparator[T]) areSeparated(a, b Interval[T]) bool {
+	if a.IsEmpty() || b.IsEmpty() {
+		return false
+	}
+
+	if a.minInfinite && b.minInfinite {
+		return false
+	} else if a.maxInfinite && b.maxInfinite {
+		return false
+	} else if a.minInfinite {
+		compare := t.Compare(a.max, b.min)
+		if compare < 0 {
+			return true
+		} else if compare == 0 {
+			return !a.maxIncluded && !b.minIncluded
+		} else {
+			return false
+		}
+	} else if b.minInfinite {
+		compare := t.Compare(b.max, a.min)
+		if compare < 0 {
+			return true
+		} else if compare == 0 {
+			return !b.maxIncluded && !a.minIncluded
+		} else {
+			return false
+		}
+	} else if a.maxInfinite {
+		compare := t.Compare(a.min, b.max)
+		if compare > 0 {
+			return true
+		} else if compare == 0 {
+			return !a.minIncluded && !b.maxIncluded
+		} else {
+			return false
+		}
+	} else if b.maxInfinite {
+		compare := t.Compare(a.max, b.min)
+		if compare < 0 {
+			return true
+		} else if compare == 0 {
+			return !a.maxIncluded && !b.minIncluded
+		} else {
+			return false
+		}
+	}
+
+	// both are finite
+	compareMaxMin := t.Compare(a.max, b.min)
+	if compareMaxMin < 0 {
+		return true
+	} else if compareMaxMin == 0 {
+		return !a.maxIncluded && !b.minIncluded
+	}
+
+	compareMinMax := t.Compare(a.min, b.max)
+	if compareMinMax > 0 {
+		return true
+	} else if compareMinMax == 0 {
+		return !a.minIncluded && !b.maxIncluded
+	}
+
+	return false
+}
+
+// Union returns the union of intervals.
+// Result is a set of intervals, all separated from each other.
+// Special case: if all sets are empty, result is just one empty set
+func (t TypedComparator[T]) Union(base Interval[T], others ...Interval[T]) []Interval[T] {
+	result := []Interval[T]{base}
+	if base.IsFull() {
+		return result
+	}
+
+	// try to join other with all elements in result, update result with max separated intervals
+	for _, other := range others {
+		// special cases, no need to process
+		if other.IsFull() {
+			return []Interval[T]{t.NewFullInterval()}
+		} else if other.IsEmpty() {
+			continue
+		}
+
+		// result so far is the set of all intervals such as no more join is possible.
+		// When we consider other, we may then group intervals together again.
+
+		// otherJoinableWithCurrents is true when other is not separated with at least one current element
+		otherJoinableWithCurrents := false
+		// separatedIntervals is the set of all separated intervals
+		separatedIntervals := make([]Interval[T], 0)
+		// toJoin is the set of intervals to reduce to an unique one.
+		// Once it is done, then the resulting set will go to unions and unions is ready
+		toJoin := make([]Interval[T], 0)
+
+		for _, current := range result {
+			if current.IsFull() {
+				return []Interval[T]{t.NewFullInterval()}
+			}
+
+			if t.areSeparated(current, other) {
+				separatedIntervals = append(separatedIntervals, current)
+			} else {
+				toJoin = append(toJoin, current)
+				otherJoinableWithCurrents = true
+			}
+		}
+
+		// don't forget to add other in one list of elements, depending on whether it may be joined
+		if otherJoinableWithCurrents {
+			toJoin = append(toJoin, other)
+		} else {
+			separatedIntervals = append(separatedIntervals, other)
+		}
+
+		// no join is possible.
+		// If so, we are done for this iteration
+		if len(toJoin) == 0 {
+			result = separatedIntervals
+			continue
+		}
+
+		// the union of all elements in toJoin is the min of left borders and max of right borders
+		var minRes, maxRes T
+		var minInRes, maxInRes bool
+		var minInfRes, maxInfRes bool
+
+		for index, element := range toJoin {
+			if index == 0 {
+				minRes, maxRes = element.min, element.max
+				minInRes, maxInRes = element.minIncluded, element.maxIncluded
+				minInfRes, maxInfRes = element.minInfinite, element.maxInfinite
+				continue
+			}
+
+			if element.minInfinite {
+				minInfRes = true
+			} else if !minInfRes {
+				compare := t.Compare(minRes, element.min)
+				if compare > 0 {
+					minRes, minInRes = element.min, element.minIncluded
+				} else if compare == 0 && !minInRes {
+					minRes, minInRes = element.min, element.minIncluded
+				}
+			}
+
+			if element.maxInfinite {
+				maxInfRes = true
+			} else if !maxInfRes {
+				compare := t.Compare(maxRes, element.max)
+				if compare < 0 {
+					maxRes, maxInRes = element.max, element.maxIncluded
+				} else if compare == 0 && !maxInRes {
+					maxRes, maxInRes = element.max, element.maxIncluded
+				}
+			}
+		}
+
+		var resultingInterval Interval[T]
+		resultingInterval.max = maxRes
+		resultingInterval.min = minRes
+		resultingInterval.maxIncluded = maxInRes
+		resultingInterval.minIncluded = minInRes
+		resultingInterval.maxInfinite = maxInfRes
+		resultingInterval.minInfinite = minInfRes
+
+		separatedIntervals = append(separatedIntervals, resultingInterval)
+		result = separatedIntervals
+	}
+
+	if len(result) == 0 {
+		result = []Interval[T]{t.NewEmptyInterval()}
+	}
+
+	return result
 }
