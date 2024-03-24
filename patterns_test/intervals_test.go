@@ -168,6 +168,22 @@ func TestIntervalComplement(t *testing.T) {
 	}
 }
 
+func TestIntervalComplementMixed(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	complements := comparator.Complement(comparator.NewLeftInfiniteInterval(10, false))
+	expected := comparator.NewRightInfiniteInterval(10, true)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, complements) {
+		t.Error("left infinite failure")
+	}
+
+	complements = comparator.Complement(comparator.NewLeftInfiniteInterval(10, true))
+	expected = comparator.NewRightInfiniteInterval(10, false)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, complements) {
+		t.Error("left infinite failure")
+	}
+}
+
 func TestIntervalIntersection(t *testing.T) {
 	comparator := patterns.NewIntComparator()
 	var a, b, result, expected patterns.Interval[int]
@@ -404,5 +420,245 @@ func TestIntervalUnionFinite(t *testing.T) {
 		t.Error("non separated intervals")
 	} else if !slicesIntervalCompare(comparator, result, comparator.Union(right, left)) {
 		t.Error("broken symetry")
+	}
+}
+
+func TestIntervalIntersectionMixed(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	a := comparator.NewLeftInfiniteInterval(10, true)
+	b := comparator.NewRightInfiniteInterval(0, false)
+	expected, _ := comparator.NewFiniteInterval(0, 10, false, true)
+	if comparator.CompareInterval(comparator.Intersection(a, b), expected) != 0 {
+		t.Error("Failed mixed boundaries test")
+	} else if comparator.CompareInterval(comparator.Intersection(b, a), expected) != 0 {
+		t.Error("broken symetry")
+	}
+
+	a = comparator.NewRightInfiniteInterval(100, true)
+	b = comparator.NewRightInfiniteInterval(10, false)
+	expected = comparator.NewRightInfiniteInterval(100, true)
+	if comparator.CompareInterval(comparator.Intersection(a, b), expected) != 0 {
+		t.Error("Failed right boundaries test")
+	} else if comparator.CompareInterval(comparator.Intersection(b, a), expected) != 0 {
+		t.Error("broken symetry")
+	}
+}
+
+func TestRemoveSingle(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	// test remove nothing
+	base := comparator.NewFullInterval()
+	result := comparator.Remove(base)
+	if len(result) != 1 || !result[0].IsFull() {
+		t.Fail()
+	}
+
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	result = comparator.Remove(base)
+	if len(result) != 1 || comparator.CompareInterval(base, result[0]) != 0 {
+		t.Fail()
+	}
+
+	// test remove empty
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	result = comparator.Remove(base, comparator.NewEmptyInterval())
+	if len(result) != 1 || comparator.CompareInterval(base, result[0]) != 0 {
+		t.Fail()
+	}
+
+	// test remove full should make empty
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	result = comparator.Remove(base, comparator.NewFullInterval())
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing full should make empty")
+	}
+
+	// removing itself should make empty
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	result = comparator.Remove(base, base)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing itself should make empty")
+	}
+
+	base = comparator.NewLeftInfiniteInterval(10, true)
+	result = comparator.Remove(base, base)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing itself should make empty")
+	}
+
+	base = comparator.NewRightInfiniteInterval(10, true)
+	result = comparator.Remove(base, base)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing itself should make empty")
+	}
+
+	// test infinite boundaries
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	other := comparator.NewLeftInfiniteInterval(1000, true)
+	result = comparator.Remove(base, other)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing larger interval should make empty")
+	}
+
+	base, _ = comparator.NewFiniteInterval(10, 100, false, true)
+	other = comparator.NewRightInfiniteInterval(0, true)
+	result = comparator.Remove(base, other)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing larger interval should make empty")
+	}
+
+	base = comparator.NewRightInfiniteInterval(100, false)
+	other = comparator.NewRightInfiniteInterval(0, true)
+	result = comparator.Remove(base, other)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing larger interval should make empty")
+	}
+
+	base = comparator.NewLeftInfiniteInterval(0, false)
+	other = comparator.NewLeftInfiniteInterval(100, true)
+	result = comparator.Remove(base, other)
+	if len(result) != 1 || !result[0].IsEmpty() {
+		t.Error("removing larger interval should make empty")
+	}
+
+	// test infinite boundaries with non empty intersection
+	// ]-oo, 100[ - [0, +oo[ = ]-oo, 0[
+	base = comparator.NewLeftInfiniteInterval(100, false)
+	other = comparator.NewRightInfiniteInterval(0, true)
+	expected := comparator.NewLeftInfiniteInterval(0, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove, should be ]0, 100[")
+	}
+
+	// ]-oo, 100[ - ] -oo, 0] = ]0, 100[
+	base = comparator.NewLeftInfiniteInterval(100, false)
+	other = comparator.NewLeftInfiniteInterval(0, true)
+	expected, _ = comparator.NewFiniteInterval(0, 100, false, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove, should be ]0, 100[")
+	}
+
+	// [10, +oo[ - ]100, +oo[ = [10, 100]
+	base = comparator.NewRightInfiniteInterval(10, true)
+	other = comparator.NewRightInfiniteInterval(100, false)
+	expected, _ = comparator.NewFiniteInterval(10, 100, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove, should be [10, 100]")
+	}
+
+	// [10, +oo[ - ]10, +oo[ = [10, 10]
+	base = comparator.NewRightInfiniteInterval(10, true)
+	other = comparator.NewRightInfiniteInterval(10, false)
+	expected, _ = comparator.NewFiniteInterval(10, 10, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed reduction to point")
+	}
+
+	// ] -oo, 10] - [10, +oo[ =]-oo, 10[]
+	base = comparator.NewLeftInfiniteInterval(10, true)
+	other = comparator.NewRightInfiniteInterval(10, true)
+	expected = comparator.NewLeftInfiniteInterval(10, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed reduction to point")
+	}
+
+	// ] -oo, 10[ - ]10, +oo[ = ]-oo, 10[
+	base = comparator.NewLeftInfiniteInterval(10, false)
+	other = comparator.NewRightInfiniteInterval(10, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{base}, result) {
+		t.Error("failed empty intersection test")
+	}
+
+	// ] -oo, 10] - ]-oo, 10[ = [10, 10]
+	base = comparator.NewLeftInfiniteInterval(10, true)
+	other = comparator.NewLeftInfiniteInterval(10, false)
+	expected, _ = comparator.NewFiniteInterval(10, 10, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed reduction to point")
+	}
+
+	// [10, +oo[ - ]10, +oo[ = [10, 10]
+	base = comparator.NewRightInfiniteInterval(10, true)
+	other = comparator.NewRightInfiniteInterval(10, false)
+	expected, _ = comparator.NewFiniteInterval(10, 10, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed reduction to point")
+	}
+}
+
+func TestRemoveSingleFinite(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	base, _ := comparator.NewFiniteInterval(10, 100, true, false)
+	other := comparator.NewRightInfiniteInterval(50, false)
+	expected, _ := comparator.NewFiniteInterval(10, 50, true, true)
+	result := comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed finite interval remove")
+	}
+
+	base, _ = comparator.NewFiniteInterval(10, 100, true, true)
+	other = comparator.NewLeftInfiniteInterval(50, false)
+	expected, _ = comparator.NewFiniteInterval(50, 100, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed finite interval remove")
+	}
+
+	// test remove point
+	base, _ = comparator.NewFiniteInterval(100, 200, true, true)
+	other, _ = comparator.NewFiniteInterval(100, 100, true, true)
+	expected, _ = comparator.NewFiniteInterval(100, 200, false, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove point")
+	}
+
+	base, _ = comparator.NewFiniteInterval(100, 200, true, true)
+	other, _ = comparator.NewFiniteInterval(200, 200, true, true)
+	expected, _ = comparator.NewFiniteInterval(100, 200, true, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove point")
+	}
+
+	base, _ = comparator.NewFiniteInterval(100, 200, false, true)
+	other, _ = comparator.NewFiniteInterval(100, 100, true, true)
+	expected, _ = comparator.NewFiniteInterval(100, 200, false, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove point")
+	}
+
+	base, _ = comparator.NewFiniteInterval(100, 200, true, false)
+	other, _ = comparator.NewFiniteInterval(200, 200, true, true)
+	expected, _ = comparator.NewFiniteInterval(100, 200, true, false)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed remove point")
+	}
+}
+
+func TestRemoveSplit(t *testing.T) {
+	comparator := patterns.NewIntComparator()
+
+	// split parts
+	base := comparator.NewRightInfiniteInterval(10, true)
+	other, _ := comparator.NewFiniteInterval(100, 200, true, false)
+	expectedPartOne, _ := comparator.NewFiniteInterval(10, 100, true, false)
+	expectedPartTwo := comparator.NewRightInfiniteInterval(200, true)
+	result := comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expectedPartOne, expectedPartTwo}, result) {
+		t.Error("failed splitting right infinite")
 	}
 }

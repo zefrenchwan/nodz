@@ -67,6 +67,11 @@ func (i Interval[T]) IsEmpty() bool {
 	return i.empty
 }
 
+// IsCompact returns true for a bounded interval with both values in it (hence, not empty)
+func (i Interval[T]) IsCompact() bool {
+	return !i.minInfinite && !i.maxInfinite && i.minIncluded && i.maxIncluded && !i.empty
+}
+
 // NewEmptyInterval returns a new empty interval
 func (t TypedComparator[T]) NewEmptyInterval() Interval[T] {
 	var result Interval[T]
@@ -195,7 +200,7 @@ func (t TypedComparator[T]) Complement(i Interval[T]) []Interval[T] {
 	case i.minInfinite:
 		result.maxInfinite = true
 		result.min = i.max
-		result.minIncluded = !result.maxIncluded
+		result.minIncluded = !i.maxIncluded
 		return []Interval[T]{result}
 	case i.maxInfinite:
 		result.minInfinite = true
@@ -478,6 +483,86 @@ func (t TypedComparator[T]) Union(base Interval[T], others ...Interval[T]) []Int
 
 	if len(result) == 0 {
 		result = []Interval[T]{t.NewEmptyInterval()}
+	}
+
+	return result
+}
+
+// Remove returns base - (union of elements) as a set of separated elements
+func (t TypedComparator[T]) Remove(base Interval[T], elements ...Interval[T]) []Interval[T] {
+	if len(elements) == 0 {
+		return []Interval[T]{base}
+	} else if base.IsEmpty() {
+		return []Interval[T]{base}
+	}
+
+	// first, group all elements so that we start with separated elements
+	var elementsToRemove []Interval[T]
+	if len(elements) == 1 {
+		elementsToRemove = []Interval[T]{elements[0]}
+	} else {
+		elementsToRemove = t.Union(elements[0], elements[1:]...)
+	}
+
+	result := []Interval[T]{base}
+	newResult := make([]Interval[T], 0)
+	for _, elementToRemove := range elementsToRemove {
+		for _, current := range result {
+			// deal with basic cases
+			basicCase := false
+			switch {
+			case current.IsEmpty():
+				// resulting interval is empty, no need to add it
+				basicCase = true
+			case current.IsFull():
+				newResult = append(newResult, t.Complement(elementToRemove)...)
+				basicCase = true
+			case elementToRemove.IsFull():
+				// no matter what, removing full returns empty
+				result = []Interval[T]{t.NewEmptyInterval()}
+				return result
+			case elementToRemove.IsEmpty():
+				newResult = append(newResult, current)
+				basicCase = true
+			}
+
+			if basicCase {
+				continue
+			}
+
+			// no full interval, no empty interval
+			// For A, B two intervals:
+			// A - B = A inter (full - B)
+			// If full - B is one interval, just make inter
+			// Else, full - B is A1 union A2, and A inter (A1 union A2) = (A inter A1) union (A inter A2)
+			complement := t.Complement(elementToRemove)
+			switch len(complement) {
+			case 1:
+				value := t.Intersection(current, complement[0])
+				newResult = append(newResult, value)
+			case 2:
+				value1 := t.Intersection(current, complement[0])
+				value2 := t.Intersection(current, complement[1])
+				if value1.IsEmpty() && value2.IsEmpty() {
+					continue
+				} else if value1.IsEmpty() {
+					newResult = append(newResult, value2)
+				} else if value2.IsEmpty() {
+					newResult = append(newResult, value1)
+				} else {
+					newResult = append(newResult, t.Union(value1, value2)...)
+				}
+			}
+		}
+
+		if len(newResult) == 1 {
+			result = newResult
+		} else if len(newResult) == 0 {
+			// no more current element, result is empty
+			return []Interval[T]{t.NewEmptyInterval()}
+		} else {
+			result = t.Union(newResult[0], newResult[1:]...)
+		}
 	}
 
 	return result
