@@ -15,10 +15,8 @@ So far:
 
 ### Next features (working on it)
 
-| branch | feature |
-|--------|---------|
-| main | walkthroughs |
-| patterns | inference in graphs |
+* walkthroughs
+* patterns 
 
 ### Features to implement one day
 
@@ -42,6 +40,7 @@ So far:
 * `examples/` contains nice code, to show some use cases
 * `graphs/` is about main definitions.  
 * `internal/` is about main implementations. 
+* `patterns` is about enriching graph model with classes, relations, instances and patterns (experimental)
 * Use of iterators: Some graphs are HUGE, so  using **iterators** is more flexible and efficient than slices (lazy loading / pagination)
 * `internal/local/`: split definitions and local implementations. **Local implementations** are "in memory" implementations of general definitions 
 
@@ -65,7 +64,12 @@ So far:
 3. Read `graphs/` interfaces if you need more details about `nodes`, `neighbors` or `links`. There should be no surprise, it is basic definition 
 4. Have a look at `graphs_test/` to understand some high level features
 5. Then, you may want to dig into `internal_test/local_test`
-6. Dig into implementation details if you like
+6. Do not pay attention so far to `patterns`, it is so far a separated part of the project
+
+## Patterns ? What is this ? 
+
+This pattern part is experimental, a new model to test. 
+It is too soon to detail `patterns` big plan, more details to come soon :)
 
 ## You like graphs or network science ? 
 
