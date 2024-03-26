@@ -31,8 +31,17 @@ func (c *FormalClass) SameNode(n graphs.Node) bool {
 	} else if node, ok := n.(*FormalClass); !ok {
 		return false
 	} else {
-		return strings.EqualFold(node.name, c.name)
+		return node.SameFormalClass(*c)
 	}
+}
+
+// SameFormalClass returns true if both classes have the same name, case insensitive
+func (c *FormalClass) SameFormalClass(other FormalClass) bool {
+	if c == nil {
+		return false
+	}
+
+	return strings.EqualFold(other.name, c.name)
 }
 
 // AddAttribute adds an attribute in the definition of the formal class
