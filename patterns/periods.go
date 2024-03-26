@@ -12,7 +12,14 @@ var periodComparator = NewTimeComparator()
 // Period is a set of moments, a moment being a time interval.
 // It is neither a duration, nor a set of duration.
 // For instance, a person lived in a country from 1999 to 2021 and since 2023.
-type Period SeparatedIntervals[time.Time]
+// Implementation may be extended to any type of elements.
+type Period struct {
+	// elements are the set of separated intervals of time.
+	// Invariants are:
+	// * if empty or just containing empty, the period is empty
+	// * if period is not empty, it contains separated intervals of time
+	elements []Interval[time.Time]
+}
 
 // NewPeriod returns a period that contains base exactly
 func NewPeriod(base Interval[time.Time]) Period {
