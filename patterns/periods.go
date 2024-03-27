@@ -28,6 +28,15 @@ func NewPeriod(base Interval[time.Time]) Period {
 	return period
 }
 
+// NewPeriodCopy just copies its parameter.
+// Intervals are immutable so they are not copied
+func NewPeriodCopy(p Period) Period {
+	var period Period
+	period.elements = make([]Interval[time.Time], len(p.elements))
+	copy(period.elements, p.elements)
+	return period
+}
+
 // NewEmptyPeriod returns an empty period
 func NewEmptyPeriod() Period {
 	var period Period
@@ -108,6 +117,31 @@ func (p *Period) Add(other Period) error {
 	return nil
 }
 
+// Intersection keeps intervals both in p and other.
+// Formally, if p = union of p_i and other = union of o_j,
+// then result is union over i and j of (p_i inter o_j )
+func (p *Period) Intersection(other Period) {
+	if p.IsEmptyPeriod() || other.IsEmptyPeriod() {
+		return
+	}
+
+	var union []Interval[time.Time]
+	for _, currentInterval := range p.elements {
+		for _, otherInterval := range other.elements {
+			intersection := periodComparator.Intersection(currentInterval, otherInterval)
+			if !intersection.IsEmpty() {
+				union = append(union, intersection)
+			}
+		}
+	}
+
+	if len(union) <= 1 {
+		p.elements = union
+	} else {
+		p.elements = periodComparator.Union(union[0], union[1:]...)
+	}
+}
+
 // Remove starts with p and remove all the intervals from other.
 // Formally, let p_i be the content of p and o_j be the content of other
 // New content for p is Union over i of (intersections over j ( p_i minus o_j ))
@@ -143,4 +177,61 @@ func (p *Period) Remove(other Period) {
 	default:
 		p.elements = periodComparator.Union(newElements[0], newElements[1:]...)
 	}
+}
+
+// Complement finds the period such as they are partition of the full space.
+// Formally, given p = union of p_i, we want other = union of o_j such as
+// o_j inter p_i is empty, and (union of o_j) union (union of p_i) is full.
+func (p *Period) Complement() {
+	if p.IsEmptyPeriod() {
+		p.elements = []Interval[time.Time]{periodComparator.NewFullInterval()}
+		return
+	}
+
+	// then, len of p.elements is at least 1 with no empty.
+	result := make([]Interval[time.Time], 0)
+
+	// first, full - union of p_i = ((full - p_1) - p_2) - ...
+	// So we start with result = full - p_1, and we add p_{i+1} from current result
+	for _, complement := range periodComparator.Complement(p.elements[0]) {
+		if !complement.IsEmpty() {
+			result = append(result, complement)
+		} else if complement.IsFull() {
+			p.elements = make([]Interval[time.Time], 0)
+			return
+		}
+	}
+
+	// Then, if result is currently A_1 union A_2 etc...
+	// result - p_{i+1} = union over j of (A_j - p_{i+1})
+	for _, element := range p.elements[1:] {
+		// result may be empty, or containing empty. No need to go on then
+		if len(result) == 0 || result[0].IsEmpty() {
+			p.elements = make([]Interval[time.Time], 0)
+			return
+		}
+
+		// Otherwise, result is not empty, we may go on.
+		// At this point, result is then union of separated intervals, A_1 ... A_m
+		// And we want the union of A_j - element
+		unions := make([]Interval[time.Time], 0)
+		for _, value := range result {
+			for _, remaining := range periodComparator.Remove(value, element) {
+				if !remaining.IsEmpty() {
+					unions = append(unions, remaining)
+				}
+			}
+		}
+
+		// unions is the union of each A_j - elements, but its items may not be separated.
+		// To ensure we group all separated elements, we take the union of what is left.
+		if len(unions) >= 2 {
+			unions = periodComparator.Union(unions[0], unions[1:]...)
+		}
+
+		// and finally, we go on with recursive removal formula
+		result = unions
+	}
+
+	p.elements = result
 }

@@ -594,6 +594,16 @@ func TestRemoveSingle(t *testing.T) {
 	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
 		t.Error("failed reduction to point")
 	}
+
+	// [10, +oo [ - ]100 +oo[ = [10, 100]
+	base = comparator.NewRightInfiniteInterval(10, true)
+	other = comparator.NewRightInfiniteInterval(100, false)
+	expected, _ = comparator.NewFiniteInterval(10, 100, true, true)
+	result = comparator.Remove(base, other)
+	if !slicesIntervalCompare(comparator, []patterns.Interval[int]{expected}, result) {
+		t.Error("failed getting finite part from two right infinites")
+	}
+
 }
 
 func TestRemoveSingleFinite(t *testing.T) {
