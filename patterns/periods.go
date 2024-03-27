@@ -6,8 +6,32 @@ import (
 	"time"
 )
 
-// default comparator for time operations
+// default comparator for time operations.
+// Golang does not allow const value, but it makes no sense to change this value.
+// Once we define it, we want to hide details of intervals and periods creation
 var periodComparator = NewTimeComparator()
+
+// NewLeftInfiniteTimeInterval returns the interval ]-oo, maxTime)
+func NewLeftInfiniteTimeInterval(maxTime time.Time, maxIncluded bool) Interval[time.Time] {
+	return periodComparator.NewLeftInfiniteInterval(maxTime, maxIncluded)
+}
+
+// NewRightInfiniteTimeInterval returns (minTime, +oo [
+func NewRightInfiniteTimeInterval(minTime time.Time, minIncluded bool) Interval[time.Time] {
+	return periodComparator.NewRightInfiniteInterval(minTime, minIncluded)
+}
+
+// NewFiniteTimeInterval returns the interval (minTime, maxTime).
+// If the interval would be empty, it returns an error
+func NewFiniteTimeInterval(minTime, maxTime time.Time, minIn, maxIn bool) (Interval[time.Time], error) {
+	return periodComparator.NewFiniteInterval(minTime, maxTime, minIn, maxIn)
+}
+
+// TimeIntervalsCompare is a shortcut to compare intervals of time without explicit use of comparator.
+// Contract is the same comparator.CompareInterval
+func TimeIntervalsCompare(a, b Interval[time.Time]) int {
+	return periodComparator.CompareInterval(a, b)
+}
 
 // Period is a set of moments, a moment being a time interval.
 // It is neither a duration, nor a set of duration.
