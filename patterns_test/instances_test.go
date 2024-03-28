@@ -8,9 +8,15 @@ import (
 	"github.com/zefrenchwan/nodz.git/patterns"
 )
 
+func TestInstanceNoInstantiatingClass(t *testing.T) {
+	if _, err := patterns.NewFormalInstance(nil); err == nil {
+		t.Fail()
+	}
+}
+
 func TestInstanceNoAttribute(t *testing.T) {
 	currentClass := patterns.NewFormalClass("test")
-	instance := patterns.NewFormalInstance(currentClass)
+	instance, _ := patterns.NewFormalInstance(&currentClass)
 
 	if err := instance.SetValue("attr", "value"); err == nil {
 		t.Fail()
@@ -26,7 +32,7 @@ func TestInstanceSetAttribute(t *testing.T) {
 	currentClass.AddAttribute("attr")
 	currentClass.AddAttribute("otherAttr")
 
-	instance := patterns.NewFormalInstance(currentClass)
+	instance, _ := patterns.NewFormalInstance(&currentClass)
 
 	if attr, err := instance.Attributes(); err != nil {
 		t.Fail()
@@ -76,7 +82,7 @@ func TestInstanceAddAttribute(t *testing.T) {
 	beforeNow := patterns.NewLeftInfiniteTimeInterval(now, false)
 	afterNow := patterns.NewRightInfiniteTimeInterval(now, true)
 
-	instance := patterns.NewFormalInstance(currentClass)
+	instance, _ := patterns.NewFormalInstance(&currentClass)
 	instance.AddValue("attr", "before", patterns.NewPeriod(beforeNow))
 	instance.AddValue("attr", "after", patterns.NewPeriod(afterNow))
 
@@ -119,7 +125,7 @@ func TestInstancePeriodChange(t *testing.T) {
 	beforeNow := patterns.NewLeftInfiniteTimeInterval(now, false)
 	afterNow := patterns.NewRightInfiniteTimeInterval(now, true)
 
-	instance := patterns.NewFormalInstance(currentClass)
+	instance, _ := patterns.NewFormalInstance(&currentClass)
 	instance.SetValue("attr", "before")
 	instance.AddValue("attr", "after", patterns.NewPeriod(afterNow))
 

@@ -67,8 +67,29 @@ func (c *FormalClass) RemoveAttribute(attribute string) {
 
 // ListAttributes returns all the attributes of the formal class, sorted
 func (c *FormalClass) ListAttributes() []string {
+	if c == nil {
+		return nil
+	} else if len(c.attributes) == 0 {
+		return nil
+	}
+
 	result := make([]string, len(c.attributes))
 	copy(result, c.attributes)
 	slices.Sort(result)
 	return result
+}
+
+// hasAttribute returns true if c is not nil and has the same attribute
+func (c *FormalClass) hasAttribute(attr string) bool {
+	if c == nil {
+		return false
+	}
+
+	for _, attribute := range c.attributes {
+		if strings.EqualFold(attr, attribute) {
+			return true
+		}
+	}
+
+	return false
 }
