@@ -10,12 +10,9 @@ import (
 
 // FormalInstance is an instance of the class.
 // It has an id, info about instantiating class to find back which class instantiated it.
-// Plus, values store time dependant values.
-// As an example, assume a person is represented by a class Person, with attributes birth date, etc.
-// Those values will be set once and will not vary over time.
-// But some will, for instance, address.
-// This code uses time dependant values for this purpose.
-// You create an instance, then add a value for an attribute during a given period.
+// Plus, values store time dependent values.
+// An entity follows no formal definition, its attributes may be anything.
+// But an instance is an instance of a class and then follows the class definition.
 type FormalInstance struct {
 	// id of the instance, should be unique
 	id string
@@ -56,7 +53,6 @@ func (i *FormalInstance) Attributes() ([]string, error) {
 
 // SetValue sets the value for an attribute during the full period.
 func (i *FormalInstance) SetValue(attribute string, value string) error {
-	// find matching map for this attribute, if any
 	if i == nil {
 		return errors.New("nil instance")
 	} else if i.metadata == nil {
