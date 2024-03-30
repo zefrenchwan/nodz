@@ -1,4 +1,4 @@
-package patterns
+package patterns_test
 
 import (
 	"slices"
@@ -8,55 +8,8 @@ import (
 	"github.com/zefrenchwan/nodz.git/patterns"
 )
 
-func TestInstanceNoInstantiatingClass(t *testing.T) {
-	entity := patterns.NewEntity()
-	class := patterns.NewFormalClass("test")
-
-	// no class => error
-	if _, err := patterns.NewFormalInstance(nil, &entity); err == nil {
-		t.Fail()
-	}
-
-	// class but no entity, build the entity
-	if _, err := patterns.NewFormalInstance(&class, nil); err != nil {
-		t.Fail()
-	}
-}
-
-func TestInstanceNoAttribute(t *testing.T) {
-	currentClass := patterns.NewFormalClass("test")
-	entity := patterns.NewEntity()
-
-	instance, _ := patterns.NewFormalInstance(&currentClass, &entity)
-
-	if err := instance.SetValue("attr", "value"); err == nil {
-		t.Fail()
-	}
-
-	if v, err := instance.Attributes(); v != nil || err != nil {
-		t.Fail()
-	}
-}
-
-func TestInstanceSetAttribute(t *testing.T) {
-	currentClass := patterns.NewFormalClass("test")
-	currentClass.AddAttribute("attr")
-	currentClass.AddAttribute("otherAttr")
-	entity := patterns.NewEntity()
-
-	instance, _ := patterns.NewFormalInstance(&currentClass, &entity)
-
-	if attr, err := instance.Attributes(); err != nil {
-		t.Fail()
-	} else if attr == nil {
-		t.Fail()
-	} else if slices.Compare(attr, []string{"attr", "otherAttr"}) != 0 {
-		t.Fail()
-	}
-
-	if err := instance.SetValue("i don't exist", "value"); err == nil {
-		t.Fail()
-	}
+func TestTimeValuesSetAttribute(t *testing.T) {
+	instance := patterns.NewTimeValues()
 
 	if err := instance.SetValue("attr", "a value"); err != nil {
 		t.Fail()
@@ -86,15 +39,13 @@ func TestInstanceSetAttribute(t *testing.T) {
 	}
 }
 
-func TestInstanceAddAttribute(t *testing.T) {
-	currentClass := patterns.NewFormalClass("test")
-	currentClass.AddAttribute("attr")
+func TestTimeValuesAddAttribute(t *testing.T) {
+	instance := patterns.NewTimeValues()
 
 	now := time.Now().UTC()
 	beforeNow := patterns.NewLeftInfiniteTimeInterval(now, false)
 	afterNow := patterns.NewRightInfiniteTimeInterval(now, true)
 
-	instance, _ := patterns.NewFormalInstance(&currentClass, nil)
 	instance.AddValue("attr", "before", patterns.NewPeriod(beforeNow))
 	instance.AddValue("attr", "after", patterns.NewPeriod(afterNow))
 
@@ -129,15 +80,13 @@ func TestInstanceAddAttribute(t *testing.T) {
 	}
 }
 
-func TestInstancePeriodChange(t *testing.T) {
-	currentClass := patterns.NewFormalClass("test")
-	currentClass.AddAttribute("attr")
+func TestTimeValuesPeriodChange(t *testing.T) {
+	instance := patterns.NewTimeValues()
 
 	now := time.Now().UTC()
 	beforeNow := patterns.NewLeftInfiniteTimeInterval(now, false)
 	afterNow := patterns.NewRightInfiniteTimeInterval(now, true)
 
-	instance, _ := patterns.NewFormalInstance(&currentClass, nil)
 	instance.SetValue("attr", "before")
 	instance.AddValue("attr", "after", patterns.NewPeriod(afterNow))
 
@@ -158,22 +107,6 @@ func TestInstancePeriodChange(t *testing.T) {
 
 	// test periods
 	if valuesMap, err := instance.TimeValuesForAttribute("attr"); err != nil {
-		t.Fail()
-	} else if len(valuesMap) != 2 {
-		t.Error("missing values in map of values")
-	} else if beforeValue := valuesMap["before"]; len(beforeValue) != 1 {
-		t.Error("intervals test failed")
-	} else if patterns.TimeIntervalsCompare(beforeNow, beforeValue[0]) != 0 {
-		t.Error("intervals test failed")
-	} else if afterValue := valuesMap["after"]; len(afterValue) != 1 {
-		t.Error("intervals test failed")
-	} else if patterns.TimeIntervalsCompare(afterValue[0], afterNow) != 0 {
-		t.Error("intervals test failed")
-	}
-
-	// Test that entity was indeed changed
-	entity := instance.GetDecoratedEntity()
-	if valuesMap, err := entity.TimeValuesForAttribute("attr"); err != nil {
 		t.Fail()
 	} else if len(valuesMap) != 2 {
 		t.Error("missing values in map of values")
