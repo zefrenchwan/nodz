@@ -4,6 +4,7 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -128,4 +129,103 @@ func (e *Entity) SetRelation(linkedElements []Entity) error {
 // IsRelation returns true if entity is not nil and is linked to others
 func (e *Entity) IsRelation() bool {
 	return e != nil && len(e.operands) != 0
+}
+
+// ContainsAttribute returns true if receiver is not nil and it contains a non nil entry with that key
+func (e *Entity) ContainsAttribute(attr string) bool {
+	if e == nil {
+		return false
+	}
+
+	return e.content.ContainsAttribute(attr)
+}
+
+// Attributes returns the sorted slice of all attributes.
+// Nil receiver returns nil
+func (e *Entity) Attributes() []string {
+	if e == nil {
+		return nil
+	}
+
+	return e.content.Attributes()
+}
+
+// SetValue sets a value for an attribute, for the full period.
+func (e *Entity) SetValue(attribute string, value string) error {
+	if e == nil {
+		return errors.New("nil instance")
+	}
+
+	return e.content.SetValue(attribute, value)
+}
+
+// AddValue sets the value of an attribute during a given period.
+// It updates the periods of the other values (for the same attribute) accordingly.
+// It returns an error if receiver is nil
+func (e *Entity) AddValue(attribute string, value string, validity Period) error {
+	if e == nil {
+		return errors.New("nil instance")
+	}
+
+	return e.content.AddValue(attribute, value, validity)
+}
+
+// ValuesForAttribute returns the values for an attribute as a sorted slice during the activity of the entity.
+// For instance, if activity is [now, +oo[ and values are set for ] -oo, now - 1 day] , then it returns nil
+func (e *Entity) ValuesForAttribute(attribute string) ([]string, error) {
+	if e == nil {
+		return nil, errors.New("nil instance")
+	}
+
+	return e.content.ValuesForAttribute(attribute)
+}
+
+// TimeValuesForAttribute returns, for each value of the attribute, the matching time intervals
+func (e *Entity) TimeValuesForAttribute(attribute string) (map[string][]Interval[time.Time], error) {
+	if e == nil {
+		return nil, errors.New("nil entity")
+	}
+
+	return e.content.TimeValuesForAttribute(attribute)
+}
+
+// AddActivity sets p as active
+func (e *Entity) AddActivity(p Period) error {
+	if e == nil {
+		return errors.New("nil entity")
+	}
+
+	return e.AddActivity(p)
+}
+
+// RemoveActivity flags p as inactive
+func (e *Entity) RemoveActivity(p Period) error {
+	if e == nil {
+		return errors.New("nil entity")
+	}
+
+	return e.content.RemoveActivity(p)
+}
+
+// SetActivity sets the period of activity no matter previous value
+func (e *Entity) SetActivity(p Period) error {
+	if e == nil {
+		return errors.New("nil entity")
+	}
+
+	return e.content.SetActivity(p)
+}
+
+// IsInactive returns true if it is is never active
+func (e *Entity) IsInactive() bool {
+	return e == nil || e.content.IsEmpty()
+}
+
+// IsActiveDuring returns true if p and the entity have at least a common point
+func (e *Entity) IsActiveDuring(p Period) bool {
+	if e == nil {
+		return false
+	}
+
+	return e.content.IsActiveDuring(p)
 }

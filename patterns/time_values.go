@@ -359,7 +359,7 @@ func (a *ActiveTimeValues) IsEmpty() bool {
 	return a == nil || a.periodOfActivity.IsEmptyPeriod()
 }
 
-// IsActiveDuringPeriod returns true if p and the active period have at least a common point
+// IsActiveDuring returns true if p and the active period have at least a common point
 func (a *ActiveTimeValues) IsActiveDuring(p Period) bool {
 	if a == nil {
 		return false
